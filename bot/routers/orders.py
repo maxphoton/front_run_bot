@@ -44,7 +44,7 @@ async def start_orders(
     if not accounts:
         err = """❌ You don't have any Opinion profiles yet.
 
-Use /add_profile to add your first Opinion profile."""
+Use /start to add your first Opinion profile."""
         if isinstance(event, Message):
             await event.answer(err)
         else:

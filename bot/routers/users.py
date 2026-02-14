@@ -28,8 +28,9 @@ from service.database import (
     get_user_accounts,
     update_proxy_status,
 )
-from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 from service.proxy_checker import check_proxy_health
+
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ async def start_check_profile(event: Union[Message, CallbackQuery]) -> None:
     if not accounts:
         err = """❌ You don't have any Opinion profiles yet.
 
-Use /add_profile to add your first Opinion profile."""
+Use /start to add your first Opinion profile."""
         if isinstance(event, Message):
             await event.answer(err)
         else:

@@ -6,14 +6,13 @@ Places a market order at the current price and stores it as finished.
 import hashlib
 import logging
 from datetime import datetime
+from typing import Union
 
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
-from typing import Union
-
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from opinion.client_factory import create_client
 from opinion.opinion_api_wrapper import (
@@ -26,13 +25,14 @@ from opinion.opinion_api_wrapper import (
     place_market_order,
 )
 from opinion_clob_sdk.chain.py_order_utils.model.sides import OrderSide
-from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 from service.database import (
     get_opinion_account,
     get_user,
     get_user_accounts,
     save_order,
 )
+
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ async def start_market_order(
     if not accounts:
         err = """❌ You don't have any Opinion profiles yet.
 
-Use /add_profile to add your first Opinion profile."""
+Use /start to add your first Opinion profile."""
         if isinstance(event, Message):
             await event.answer(err)
         else:

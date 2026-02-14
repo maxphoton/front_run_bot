@@ -28,8 +28,6 @@ from service.database import (
 )
 from service.proxy_checker import check_proxy_health, validate_proxy_format
 
-from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
-
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -342,6 +340,7 @@ async def save_and_notify_account(
 💰 Balance: <b>{balance:.6f} USDT</b>{proxy_info}""",
             parse_mode="HTML",
         )
+        from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 
         await message.answer(
             MAIN_MENU_PREFIX + "Main menu",
@@ -460,6 +459,9 @@ Select an profile to remove:
 @account_router.callback_query(F.data.startswith("remove_account_"))
 async def process_remove_account(callback: CallbackQuery):
     """Handles account removal."""
+    if settings.one_account:
+        await callback.answer()
+        return
     account_id_str = callback.data.replace("remove_account_", "")
     try:
         account_id = int(account_id_str)

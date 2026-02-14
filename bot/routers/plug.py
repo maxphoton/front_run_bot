@@ -1,29 +1,20 @@
 """
 Router for handling unknown messages (fallback handler).
-Responds with standard instruction message for messages that don't match any other handlers.
+Shows main menu with colored inline buttons.
 """
 
 from aiogram import Router
 from aiogram.types import Message
+
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 
 plug_router = Router()
 
 
 @plug_router.message()
 async def handle_unknown_message(message: Message):
-    """
-    Handler for all messages that don't match any other handlers.
-    Responds with a standard instruction message.
-    """
+    """Show main menu with inline buttons for unmatched messages."""
     await message.answer(
-        """Use the /floating_order to place floating order.
-Use the /market to place a market order.
-Use the /limit to place a limit order.
-Use the /limit_first command for keeps your limit orders always first in the order book.
-Use the /orders to manage your orders.
-Use the /check_profile to view profile statistics.
-Use the /profile_list to view all your profiles.
-Use the /help to view instructions.
-Use the /support to contact administrator.
-Docs: https://bidask-bot.gitbook.io/docs/"""
+        MAIN_MENU_PREFIX + "Main menu",
+        reply_markup=build_main_menu_keyboard().as_markup(),
     )

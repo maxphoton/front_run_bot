@@ -28,6 +28,7 @@ from opinion.websocket_sync import get_websocket_sync
 from opinion_clob_sdk import Client
 from opinion_clob_sdk.chain.py_order_utils.model.sides import OrderSide
 from service.config import TICK_SIZE
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 from service.database import (
     get_opinion_account,
     get_user,
@@ -955,18 +956,9 @@ async def process_cancel(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.answer()
 
-    # Send instruction message
     await callback.message.answer(
-        """Use the /floating_order to place floating order.
-Use the /market to place a market order.
-Use the /limit to place a limit order.
-Use the /limit_first command for keeps your limit orders always first in the order book.
-Use the /orders to manage your orders.
-Use the /check_profile to view profile statistics.
-Use the /profile_list to view all your profiles.
-Use the /help to view instructions.
-Use the /support to contact administrator.
-Docs: https://bidask-bot.gitbook.io/docs/"""
+        MAIN_MENU_PREFIX + "Main menu",
+        reply_markup=build_main_menu_keyboard().as_markup(),
     )
 
 

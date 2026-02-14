@@ -15,6 +15,7 @@ from aiogram.types import CallbackQuery, FSInputFile, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from opinion.client_factory import create_client
 from opinion.opinion_api_wrapper import get_usdt_balance
+from service.config import settings
 from service.database import (
     check_api_key_exists,
     check_private_key_exists,
@@ -26,6 +27,8 @@ from service.database import (
     save_opinion_account,
 )
 from service.proxy_checker import check_proxy_health, validate_proxy_format
+
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -49,10 +52,35 @@ class AddAccountStates(StatesGroup):
 
 account_router = Router()
 
+ADD_ACCOUNT_CAPTION = """🔐 Bot Registration
+
+⚠️ Attention: All data (wallet address, private key, API key) is encrypted using a private encryption key and stored in an encrypted form.
+The data is never used in its raw form and is not shared with third parties.
+
+Please enter your Balance spot address found <a href="https://app.opinion.trade?code=BJea79">in your profile</a>:
+
+⚠️ Important: You must specify the spot address for which you received the API key."""
+
+
+async def start_add_account_flow(message: Message, state: FSMContext) -> None:
+    """Start the add-profile flow: send wallet prompt and set state. Caller must ensure user is registered."""
+    builder = InlineKeyboardBuilder()
+    builder.button(text="✖️ Cancel", callback_data="cancel_add_account")
+    image_path = Path(__file__).parent.parent.parent / "files" / "spot_addr.png"
+    photo = FSInputFile(image_path)
+    await message.answer_photo(
+        photo=photo,
+        caption=ADD_ACCOUNT_CAPTION,
+        reply_markup=builder.as_markup(),
+    )
+    await state.set_state(AddAccountStates.waiting_wallet)
+
 
 @account_router.message(Command("add_profile"))
 async def cmd_add_account(message: Message, state: FSMContext):
     """Handler for /add_profile command - start of account addition process."""
+    if settings.one_account:
+        return
     logger.info(f"Команда /add_profile от пользователя {message.from_user.id}")
     telegram_id = message.from_user.id
 
@@ -63,27 +91,7 @@ async def cmd_add_account(message: Message, state: FSMContext):
         )
         return
 
-    # Create keyboard with "Cancel" button
-    builder = InlineKeyboardBuilder()
-    builder.button(text="✖️ Cancel", callback_data="cancel_add_account")
-
-    # Путь к изображению (файл находится в корне проекта)
-    image_path = Path(__file__).parent.parent.parent / "files" / "spot_addr.png"
-    photo = FSInputFile(image_path)
-
-    await message.answer_photo(
-        photo=photo,
-        caption="""🔐 Bot Registration
-    
-⚠️ Attention: All data (wallet address, private key, API key) is encrypted using a private encryption key and stored in an encrypted form.
-The data is never used in its raw form and is not shared with third parties.
-
-Please enter your Balance spot address found <a href="https://app.opinion.trade?code=BJea79">in your profile</a>:
-
-⚠️ Important: You must specify the spot address for which you received the API key.""",
-        reply_markup=builder.as_markup(),
-    )
-    await state.set_state(AddAccountStates.waiting_wallet)
+    await start_add_account_flow(message, state)
 
 
 @account_router.message(AddAccountStates.waiting_wallet)
@@ -204,9 +212,6 @@ Please enter a different API key:"""
         await message.delete()
     except Exception:
         pass
-
-    # API key is the last step now
-    await message.answer("✅ API key saved. Adding profile...")
 
     data = await state.get_data()
     await save_and_notify_account(
@@ -333,12 +338,14 @@ async def save_and_notify_account(
             f"""✅ <b>Profile added successfully!</b>
 
 🆔 Profile ID: <code>{account_id}</code>
-💼 Wallet: <code>{wallet_address[:10]}...{wallet_address[-6:]}</code>
-💰 Balance: <b>{balance:.6f} USDT</b>{proxy_info}
-
-Use /profile_list to view all your profiles.
-Use /floating_order to place an order.""",
+💼 Wallet: <code>{wallet_address}</code>
+💰 Balance: <b>{balance:.6f} USDT</b>{proxy_info}""",
             parse_mode="HTML",
+        )
+
+        await message.answer(
+            MAIN_MENU_PREFIX + "Main menu",
+            reply_markup=build_main_menu_keyboard().as_markup(),
         )
 
     except Exception as e:
@@ -354,6 +361,8 @@ Please check your credentials and try again."""
 @account_router.message(Command("profile_list"))
 async def cmd_list_accounts(message: Message):
     """Handler for /profile_list command - shows all user profiles."""
+    if settings.one_account:
+        return
     logger.info(f"Команда /profile_list от пользователя {message.from_user.id}")
     telegram_id = message.from_user.id
 
@@ -390,8 +399,7 @@ Use /add_profile to add your first Opinion profile."""
             proxy_info = "\n\n🔐 Proxy: Not configured"
 
         accounts_list.append(
-            f"{i}. Profile ID: {account_id}\n"
-            f"   Wallet: {wallet[:10]}...{wallet[-6:]}{proxy_info}"
+            f"{i}. <b>Profile ID:</b> {account_id}\n   <b>Wallet:</b> {wallet}{proxy_info}"
         )
 
     message_text = f"""📋 Your Opinion Profiles
@@ -407,6 +415,8 @@ Total profiles: {len(accounts)}"""
 @account_router.message(Command("remove_profile"))
 async def cmd_remove_account(message: Message):
     """Handler for /remove_profile command - shows account selection for removal."""
+    if settings.one_account:
+        return
     logger.info(f"Команда /remove_profile от пользователя {message.from_user.id}")
     telegram_id = message.from_user.id
 

@@ -9,6 +9,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Back, Button, Group
 from aiogram_dialog.widgets.text import Const, Format
 from opinion.client_factory import create_client
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 from service.database import (
     get_account_orders,
     get_opinion_account,
@@ -180,18 +181,10 @@ To exit cancel mode, press the Cancel Order button again."""
 
 
 async def on_exit(callback: CallbackQuery, button: Button, manager: DialogManager):
-    """Обработчик кнопки Exit - отправляет сообщение и закрывает диалог."""
+    """Обработчик кнопки Exit - отправляет main menu и закрывает диалог."""
     await callback.message.answer(
-        """Use the /floating_order to place floating order.
-Use the /market to place a market order.
-Use the /limit to place a limit order.
-Use the /limit_first command for keeps your limit orders always first in the order book.
-Use the /orders to manage your orders.
-Use the /check_profile to view profile statistics.
-Use the /profile_list to view all your profiles.
-Use the /help to view instructions.
-Use the /support to contact administrator.
-Docs: https://bidask-bot.gitbook.io/docs/"""
+        MAIN_MENU_PREFIX + "Main menu",
+        reply_markup=build_main_menu_keyboard().as_markup(),
     )
     await manager.done()
     await callback.answer()

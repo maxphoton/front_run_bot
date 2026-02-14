@@ -23,7 +23,6 @@ from opinion.sync_orders import async_sync_all_orders
 # from opinion.websocket_sync import WebSocketOrderSync, set_websocket_sync
 from routers.account import account_router
 from routers.admin import admin_router
-from routers.floating_order import market_router
 from routers.limit import limit_order_router
 from routers.limit_first import limit_first_order_router
 from routers.market import market_order_router
@@ -140,7 +139,6 @@ async def main():
     # Регистрируем роутеры
     dp.include_router(start_router)  # User registration router
     dp.include_router(account_router)  # Account management router
-    dp.include_router(market_router)  # Floating order placement router
     dp.include_router(market_order_router)  # Market order placement router
     dp.include_router(limit_order_router)  # Limit order placement router
     dp.include_router(limit_first_order_router)  # Fixed offset limit order router

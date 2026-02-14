@@ -5,15 +5,15 @@ Handles help, support, and account checking commands.
 
 import logging
 from datetime import datetime
+from typing import Union
 
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, LinkPreviewOptions, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from help_text import HELP_TEXT, HELP_TEXT_CN, HELP_TEXT_ENG
 from opinion.client_factory import create_client
 from opinion.opinion_api_wrapper import (
     ORDER_STATUS_PENDING,
@@ -28,6 +28,7 @@ from service.database import (
     get_user_accounts,
     update_proxy_status,
 )
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 from service.proxy_checker import check_proxy_health
 
 logger = logging.getLogger(__name__)
@@ -50,54 +51,75 @@ class SupportStates(StatesGroup):
 user_router = Router()
 
 
-@user_router.message(Command("check_profile"))
-async def cmd_check_account(message: Message):
-    """Обработчик команды /check_profile - статистика по аккаунту."""
-    logger.info(f"Команда /check_profile от пользователя {message.from_user.id}")
-    telegram_id = message.from_user.id
+def _message_from_event(event: Union[Message, CallbackQuery]) -> Message:
+    """Get Message from either Message or CallbackQuery."""
+    return event if isinstance(event, Message) else event.message
 
-    # Проверяем, зарегистрирован ли пользователь
+
+async def start_check_profile(event: Union[Message, CallbackQuery]) -> None:
+    """Shared entry: start check profile flow (from command or menu callback)."""
+    telegram_id = event.from_user.id
     user = await get_user(telegram_id)
     if not user:
-        await message.answer(
-            """❌ You are not registered. Use /start to register first."""
-        )
+        err = """❌ You are not registered. Use /start to register first."""
+        if isinstance(event, Message):
+            await event.answer(err)
+        else:
+            await event.message.edit_text(err)
+            await event.answer()
         return
 
-    # Получаем все аккаунты пользователя
     accounts = await get_user_accounts(telegram_id)
     if not accounts:
-        await message.answer(
-            """❌ You don't have any Opinion profiles yet.
+        err = """❌ You don't have any Opinion profiles yet.
 
 Use /add_profile to add your first Opinion profile."""
-        )
+        if isinstance(event, Message):
+            await event.answer(err)
+        else:
+            await event.message.edit_text(err)
+            await event.answer()
         return
 
-    # Если аккаунт один, используем его автоматически
     if len(accounts) == 1:
         account_id = accounts[0]["account_id"]
-        await show_account_info(message, account_id)
+        await show_account_info(_message_from_event(event), account_id)
+        if isinstance(event, CallbackQuery):
+            await event.answer()
         return
 
-    # Если аккаунтов несколько, показываем выбор
     builder = InlineKeyboardBuilder()
     for account in accounts:
         wallet = account["wallet_address"]
-        account_id = account["account_id"]
+        acc_id = account["account_id"]
         builder.button(
-            text=f"Account {account_id} ({wallet[:8]}...)",
-            callback_data=f"check_account_{account_id}",
+            text=f"Account {acc_id} ({wallet[:8]}...)",
+            callback_data=f"check_account_{acc_id}",
         )
     builder.button(text="✖️ Cancel", callback_data="cancel_check_account")
     builder.adjust(1)
 
-    await message.answer(
-        """📊 Check Account
+    text = """📊 Check Account
 
-Select an account to view statistics:""",
-        reply_markup=builder.as_markup(),
-    )
+Select an account to view statistics:"""
+    if isinstance(event, Message):
+        await event.answer(text, reply_markup=builder.as_markup())
+    else:
+        await event.message.edit_text(text, reply_markup=builder.as_markup())
+        await event.answer()
+
+
+@user_router.message(Command("check_profile"))
+async def cmd_check_account(message: Message):
+    """Обработчик команды /check_profile - статистика по аккаунту."""
+    logger.info(f"Команда /check_profile от пользователя {message.from_user.id}")
+    await start_check_profile(message)
+
+
+@user_router.callback_query(F.data == "menu_check_profile")
+async def menu_check_profile(callback: CallbackQuery):
+    """Main menu: start check profile flow."""
+    await start_check_profile(callback)
 
 
 @user_router.callback_query(F.data.startswith("check_account_"))
@@ -188,17 +210,19 @@ async def show_account_info(message: Message, account_id: int):
         account_info = f"""📊 <b>Profile Statistics</b>
 
 🆔 Account ID: {account_id}
-💼 Wallet: {wallet[:10]}...{wallet[-6:]}
-
+💼 Wallet: <code>{wallet}</code>
 💰 USDT Balance: {balance:.6f} USDT
-
-📋 Open Orders: {open_orders_count}
-
+📋 Count open orders: {open_orders_count}
 📈 Open Positions: {positions_count}
+💵 Total Value in Positions: {total_value:.6f} USDT{proxy_info}
 
-💵 Total Value in Positions: {total_value:.6f} USDT{proxy_info}"""
+You may see all orders by command '/orders'"""
 
-        await message.answer(account_info, parse_mode=ParseMode.HTML)
+        await message.answer(
+            account_info,
+            parse_mode=ParseMode.HTML,
+            reply_markup=_build_help_keyboard().as_markup(),
+        )
 
     except Exception as e:
         logger.error(f"Ошибка при получении статистики аккаунта {account_id}: {e}")
@@ -207,54 +231,62 @@ async def show_account_info(message: Message, account_id: int):
         )
 
 
+HELP_DOC_URL = "https://bidask-bot.gitbook.io/docs/"
+
+HELP_MESSAGE = (
+    "For information and instructions - see documentation: "
+    f'<a href="{HELP_DOC_URL}">https://bidask-bot.gitbook.io/docs/</a>'
+)
+
+
+def _build_help_keyboard() -> InlineKeyboardBuilder:
+    """Help message keyboard with Main menu button."""
+    builder = InlineKeyboardBuilder()
+    builder.button(text="🏠 Main menu", callback_data="show_main_menu")
+    return builder
+
+
+async def send_help_content(event: Union[Message, CallbackQuery]) -> None:
+    """Send short help with doc link (from command or menu callback). Link preview disabled."""
+    link_preview = LinkPreviewOptions(is_disabled=True)
+    markup = _build_help_keyboard().as_markup()
+    if isinstance(event, Message):
+        await event.answer(
+            HELP_MESSAGE,
+            parse_mode=ParseMode.HTML,
+            link_preview_options=link_preview,
+            reply_markup=markup,
+        )
+    else:
+        await event.message.edit_text(
+            HELP_MESSAGE,
+            parse_mode=ParseMode.HTML,
+            link_preview_options=link_preview,
+            reply_markup=markup,
+        )
+        await event.answer()
+
+
 @user_router.message(Command("help"))
 async def cmd_help(message: Message):
-    """Обработчик команды /help - инструкция по работе с ботом."""
+    """Обработчик команды /help - ссылка на документацию."""
     logger.info(f"Команда /help от пользователя {message.from_user.id}")
+    await send_help_content(message)
 
-    # Создаем клавиатуру с кнопками выбора языка
-    builder = InlineKeyboardBuilder()
-    builder.button(text="🇷🇺 Русский", callback_data="help_lang_ru")
-    builder.button(text="🇬🇧 English", callback_data="help_lang_eng")
-    builder.button(text="🇨🇳 中文", callback_data="help_lang_cn")
-    builder.adjust(3)
 
-    await message.answer(
-        HELP_TEXT_ENG, parse_mode="HTML", reply_markup=builder.as_markup()
+@user_router.callback_query(F.data == "menu_help")
+async def menu_help(callback: CallbackQuery):
+    """Main menu: show help (doc link)."""
+    await send_help_content(callback)
+
+
+@user_router.callback_query(F.data == "show_main_menu")
+async def show_main_menu(callback: CallbackQuery):
+    """From help (or other): show main menu with buttons."""
+    await callback.message.edit_text(
+        MAIN_MENU_PREFIX + "Main menu",
+        reply_markup=build_main_menu_keyboard().as_markup(),
     )
-
-
-@user_router.callback_query(F.data.startswith("help_lang_"))
-async def process_help_lang(callback: CallbackQuery):
-    """Обработчик переключения языка в инструкции."""
-    lang = callback.data.split("_")[-1]
-
-    # Выбираем текст в зависимости от языка
-    if lang == "ru":
-        text = HELP_TEXT
-    elif lang == "eng":
-        text = HELP_TEXT_ENG
-    elif lang == "cn":
-        text = HELP_TEXT_CN
-    else:
-        text = HELP_TEXT
-
-    # Создаем клавиатуру с кнопками выбора языка
-    builder = InlineKeyboardBuilder()
-    builder.button(text="🇷🇺 Русский", callback_data="help_lang_ru")
-    builder.button(text="🇬🇧 English", callback_data="help_lang_eng")
-    builder.button(text="🇨🇳 中文", callback_data="help_lang_cn")
-    builder.adjust(3)
-
-    try:
-        await callback.message.edit_text(
-            text, parse_mode="HTML", reply_markup=builder.as_markup()
-        )
-    except Exception as e:
-        logger.error(f"Ошибка при обновлении текста инструкции: {e}")
-        await callback.answer("❌ Error updating message")
-        return
-
     await callback.answer()
 
 

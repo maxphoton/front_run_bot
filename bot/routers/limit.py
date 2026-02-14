@@ -13,6 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from typing import Union
 from opinion.client_factory import create_client
 from opinion.opinion_api_wrapper import (
     calculate_spread_and_liquidity,
@@ -24,6 +25,7 @@ from opinion.opinion_api_wrapper import (
     place_limit_order,
 )
 from opinion_clob_sdk.chain.py_order_utils.model.sides import OrderSide
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 from service.config import TICK_SIZE
 from service.database import (
     get_opinion_account,
@@ -104,58 +106,81 @@ def format_orderbook_levels(orderbook) -> tuple[str, str]:
     return bids_text, asks_text
 
 
-@limit_order_router.message(Command("limit"))
-async def cmd_limit_order(message: Message, state: FSMContext):
-    """Handler for /limit command - start limit order placement."""
-    telegram_id = message.from_user.id
+async def start_limit_order(
+    event: Union[Message, CallbackQuery], state: FSMContext
+) -> None:
+    """Shared entry: start limit order flow (from command or menu callback)."""
+    telegram_id = event.from_user.id
     user = await get_user(telegram_id)
 
     if not user:
-        await message.answer(
-            """❌ You are not registered. Use the /start to register."""
-        )
+        err = """❌ You are not registered. Use the /start to register."""
+        if isinstance(event, Message):
+            await event.answer(err)
+        else:
+            await event.message.edit_text(err)
+            await event.answer()
         return
 
     accounts = await get_user_accounts(telegram_id)
     if not accounts:
-        await message.answer(
-            """❌ You don't have any Opinion profiles yet.
+        err = """❌ You don't have any Opinion profiles yet.
 
 Use /add_profile to add your first Opinion profile."""
-        )
+        if isinstance(event, Message):
+            await event.answer(err)
+        else:
+            await event.message.edit_text(err)
+            await event.answer()
         return
 
     if len(accounts) == 1:
         account_id = accounts[0]["account_id"]
         await state.update_data(account_id=account_id)
         builder = build_cancel_keyboard("limit_cancel")
-        await message.answer(
-            """📊 Place a Limit Order
+        text = """📊 Place a Limit Order
 
-Please enter the <a href="https://app.opinion.trade?code=BJea79">Opinion.trade</a> market link:""",
-            reply_markup=builder.as_markup(),
-        )
+Please enter the <a href="https://app.opinion.trade?code=BJea79">Opinion.trade</a> market link:"""
+        if isinstance(event, Message):
+            await event.answer(text, reply_markup=builder.as_markup())
+        else:
+            await event.message.edit_text(text, reply_markup=builder.as_markup())
+            await event.answer()
         await state.set_state(LimitOrderStates.waiting_url)
         return
 
     builder = InlineKeyboardBuilder()
     for account in accounts:
         wallet = account["wallet_address"]
-        account_id = account["account_id"]
+        acc_id = account["account_id"]
         builder.button(
-            text=f"Account {account_id} ({wallet[:8]}...)",
-            callback_data=f"limit_select_account_{account_id}",
+            text=f"Account {acc_id} ({wallet[:8]}...)",
+            callback_data=f"limit_select_account_{acc_id}",
         )
     builder.button(text="✖️ Cancel", callback_data="limit_cancel")
     builder.adjust(1)
 
-    await message.answer(
-        """📊 Place a Limit Order
+    text = """📊 Place a Limit Order
 
-Select an account to use:""",
-        reply_markup=builder.as_markup(),
-    )
+Select an account to use:"""
+    if isinstance(event, Message):
+        await event.answer(text, reply_markup=builder.as_markup())
+    else:
+        await event.message.edit_text(text, reply_markup=builder.as_markup())
+        await event.answer()
     await state.set_state(LimitOrderStates.waiting_account_selection)
+
+
+@limit_order_router.message(Command("limit"))
+async def cmd_limit_order(message: Message, state: FSMContext):
+    """Handler for /limit command - start limit order placement."""
+    await start_limit_order(message, state)
+
+
+@limit_order_router.callback_query(F.data == "menu_limit")
+async def menu_limit(callback: CallbackQuery, state: FSMContext):
+    """Main menu: start limit order flow."""
+    await start_limit_order(callback, state)
 
 
 @limit_order_router.callback_query(
@@ -814,14 +839,6 @@ async def process_cancel(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     await callback.message.answer(
-        """Use the /floating_order to place floating order.
-Use the /market to place a market order.
-Use the /limit to place a limit order.
-Use the /limit_first command for keeps your limit orders always first in the order book.
-Use the /orders to manage your orders.
-Use the /check_profile to view profile statistics.
-Use the /profile_list to view all your profiles.
-Use the /help to view instructions.
-Use the /support to contact administrator.
-Docs: https://bidask-bot.gitbook.io/docs/"""
+        MAIN_MENU_PREFIX + "Main menu",
+        reply_markup=build_main_menu_keyboard().as_markup(),
     )

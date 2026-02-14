@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     rpc_url: str  # URL RPC ноды BNB Chain
     admin_telegram_id: int = 0  # ID администратора для команды /get_db
 
+    # Регистрация только по инвайт-коду (True) или без инвайта (False)
+    invite_required: bool = False
+
+    # Разрешить только один аккаунт (Opinion profile) на пользователя
+    one_account: bool = True
+
     # Прокси для всех API запросов (опционально)
     # Формат: host:port:username:password (например: 91.216.186.156:8000:Ym81H9:ysZcvQ)
     proxy: Optional[str] = None

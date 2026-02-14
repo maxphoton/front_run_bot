@@ -4,6 +4,7 @@ Handles viewing and managing user orders.
 """
 
 import logging
+from typing import Union
 
 from aiogram import F, Router
 from aiogram.filters import Command
@@ -23,59 +24,77 @@ logger = logging.getLogger(__name__)
 orders_manage_router = Router()
 
 
-@orders_manage_router.message(Command("orders"))
-async def cmd_orders(message: Message, dialog_manager: DialogManager):
-    """Обработчик команды /orders - просмотр ордеров пользователя."""
-    logger.info(f"Команда /orders от пользователя {message.from_user.id}")
-    telegram_id = message.from_user.id
+async def start_orders(
+    event: Union[Message, CallbackQuery], dialog_manager: DialogManager
+) -> None:
+    """Shared entry: start orders/portfolio flow (from command or menu callback)."""
+    telegram_id = event.from_user.id
 
-    # Проверяем, зарегистрирован ли пользователь
     user = await get_user(telegram_id)
     if not user:
-        await message.answer(
-            """❌ You are not registered. Use /start to register first."""
-        )
+        err = """❌ You are not registered. Use /start to register first."""
+        if isinstance(event, Message):
+            await event.answer(err)
+        else:
+            await event.message.edit_text(err)
+            await event.answer()
         return
 
-    # Получаем все аккаунты пользователя
     accounts = await get_user_accounts(telegram_id)
     if not accounts:
-        await message.answer(
-            """❌ You don't have any Opinion profiles yet.
+        err = """❌ You don't have any Opinion profiles yet.
 
 Use /add_profile to add your first Opinion profile."""
-        )
+        if isinstance(event, Message):
+            await event.answer(err)
+        else:
+            await event.message.edit_text(err)
+            await event.answer()
         return
 
-    # Если аккаунт один, используем его автоматически
     if len(accounts) == 1:
         account_id = accounts[0]["account_id"]
-        # Запускаем диалог с передачей account_id
         await dialog_manager.start(
             OrdersSG.orders_list,
             data={"account_id": account_id},
             mode=StartMode.RESET_STACK,
         )
+        if isinstance(event, CallbackQuery):
+            await event.answer()
         return
 
-    # Если аккаунтов несколько, показываем выбор
     builder = InlineKeyboardBuilder()
     for account in accounts:
         wallet = account["wallet_address"]
-        account_id = account["account_id"]
+        acc_id = account["account_id"]
         builder.button(
-            text=f"Account {account_id} ({wallet[:8]}...)",
-            callback_data=f"orders_account_{account_id}",
+            text=f"Account {acc_id} ({wallet[:8]}...)",
+            callback_data=f"orders_account_{acc_id}",
         )
     builder.button(text="✖️ Cancel", callback_data="cancel_orders")
     builder.adjust(1)
 
-    await message.answer(
-        """📋 View Orders
+    text = """📋 View Orders
 
-Select an account to view orders:""",
-        reply_markup=builder.as_markup(),
-    )
+Select an account to view orders:"""
+    if isinstance(event, Message):
+        await event.answer(text, reply_markup=builder.as_markup())
+    else:
+        await event.message.edit_text(text, reply_markup=builder.as_markup())
+        await event.answer()
+
+
+@orders_manage_router.message(Command("orders"))
+async def cmd_orders(message: Message, dialog_manager: DialogManager):
+    """Обработчик команды /orders - просмотр ордеров пользователя."""
+    logger.info(f"Команда /orders от пользователя {message.from_user.id}")
+    await start_orders(message, dialog_manager)
+
+
+@orders_manage_router.callback_query(F.data == "menu_orders")
+async def menu_orders(callback: CallbackQuery, dialog_manager: DialogManager):
+    """Main menu: start orders/portfolio flow."""
+    await start_orders(callback, dialog_manager)
 
 
 @orders_manage_router.callback_query(F.data.startswith("orders_account_"))

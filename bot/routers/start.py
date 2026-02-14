@@ -1,6 +1,6 @@
 """
 Router for user registration flow (/start command).
-Handles the registration process - only invite code.
+Handles the registration process - invite code optional via settings.
 """
 
 import logging
@@ -11,11 +11,57 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from service.config import settings
 from service.database import get_user, save_user
 
+from routers.account import start_add_account_flow
 from routers.invites import is_invite_valid, use_invite
 
 logger = logging.getLogger(__name__)
+
+# Home emoji prefix for main menu messages
+MAIN_MENU_PREFIX = "🏠 "
+
+# Shared completion message (no /floating_order)
+REGISTRATION_COMPLETED_MSG = (
+    MAIN_MENU_PREFIX
+    + """✅ Registration Completed!
+
+Now you need to add your Opinion profile.
+
+Step 2: Use the /add_profile to add your first Opinion profile with wallet address, private key, and API key.
+
+After adding an account, you can:
+• Use /market to place a market order.
+• Use /limit to place a limit order.
+• Use /limit_first command for keeps your limit orders always first in the order book.
+• Use /orders to manage your orders.
+• Use /check_profile to view profile statistics.
+• Use /profile_list to view all your profiles.
+• Use /help to view instructions.
+• Use /support to contact administrator.
+
+📚 Docs: https://bidask-bot.gitbook.io/docs/"""
+)
+
+WELCOME_REGISTERED_MSG = (
+    MAIN_MENU_PREFIX
+    + """✅ You are already registered!
+
+Use the menu below or:
+Use the /market to place a market order.
+Use the /limit to place a limit order.
+Use the /limit_first command for keeps your limit orders always first in the order book.
+Use the /orders to manage your orders.
+Use the /check_profile to view profile statistics.
+Use the /profile_list to view all your profiles.
+Use the /help to view instructions.
+Use the /support to contact administrator.
+
+🚀 Subscribe for best strategies, updates and VIP access @cmchn_public
+📚 Docs: https://bidask-bot.gitbook.io/docs/"""
+)
 
 # ============================================================================
 # States for user registration
@@ -26,6 +72,44 @@ class RegistrationStates(StatesGroup):
     """States for the registration process."""
 
     waiting_invite = State()
+
+
+# ============================================================================
+# Main menu keyboard
+# ============================================================================
+
+
+def build_main_menu_keyboard() -> InlineKeyboardBuilder:
+    """Build main menu with inline buttons. Portfolio runs check_profile."""
+    builder = InlineKeyboardBuilder()
+    # style: Bot API 9.4 — primary (blue), success (green), danger (red)
+    builder.button(
+        text="📊 Market order",
+        callback_data="menu_market",
+        style="primary",
+    )
+    builder.button(
+        text="📈 Limit order",
+        callback_data="menu_limit",
+        style="danger",
+    )
+    builder.button(
+        text="🥇 Always-first order",
+        callback_data="menu_limit_first",
+        style="danger",
+    )
+    builder.button(
+        text="📋 Portfolio",
+        callback_data="menu_check_profile",
+        style="primary",
+    )
+    builder.button(
+        text="❓ Help",
+        callback_data="menu_help",
+        style="success",
+    )
+    builder.adjust(2, 2, 1)  # 2+2+1 rows
+    return builder
 
 
 # ============================================================================
@@ -43,29 +127,27 @@ async def cmd_start(message: Message, state: FSMContext):
 
     if user:
         await message.answer(
-            """✅ You are already registered!
-
-Use the /floating_order to place floating order.
-Use the /market to place a market order.
-Use the /limit to place a limit order.
-Use the /limit_first command for keeps your limit orders always first in the order book.
-Use the /orders to manage your orders.
-Use the /check_profile to view profile statistics.
-Use the /profile_list to view all your profiles.
-Use the /help to view instructions.
-Use the /support to contact administrator.
-
-🚀 Subscribe for best strategies, updates and VIP access @cmchn_public
-📚 Docs: https://bidask-bot.gitbook.io/docs/"""
+            MAIN_MENU_PREFIX + "Main menu",
+            reply_markup=build_main_menu_keyboard().as_markup(),
         )
         return
 
-    # Запрашиваем инвайт
+    if not settings.invite_required:
+        await save_user(
+            telegram_id=message.from_user.id,
+            username=message.from_user.username.strip()
+            if message.from_user.username
+            else None,
+        )
+        await state.clear()
+        await start_add_account_flow(message, state)
+        return
+
     await message.answer(
         """ Welcome!
 🚀 Subscribe for best strategies, updates and VIP access @cmchn_public
 📚 Docs: https://bidask-bot.gitbook.io/docs/
-        
+
 🔐 Step 1: Bot Registration
 
 To register, you need an invite code.
@@ -126,22 +208,6 @@ Please start registration again with /start using a valid invite code."""
 
     await state.clear()
     await message.answer(
-        """✅ Registration Completed!
-
-Now you need to add your Opinion profile.
-
-Step 2: Use the /add_profile to add your first Opinion profile with wallet address, private key, and API key.
-
-After adding an account, you can:
-• Use /floating_order to place floating order.
-• Use /market to place a market order.
-• Use /limit to place a limit order.
-• Use /limit_first command for keeps your limit orders always first in the order book.
-• Use /orders to manage your orders.
-• Use /check_profile to view profile statistics.
-• Use /profile_list to view all your profiles.
-• Use /help to view instructions.
-• Use /support to contact administrator.
-
-📚 Docs: https://bidask-bot.gitbook.io/docs/"""
+        REGISTRATION_COMPLETED_MSG,
+        reply_markup=build_main_menu_keyboard().as_markup(),
     )

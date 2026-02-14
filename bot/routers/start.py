@@ -13,7 +13,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from service.config import settings
-from service.database import get_user, save_user
+from service.database import get_user, get_user_accounts, save_user
 
 from routers.account import start_add_account_flow
 from routers.invites import is_invite_valid, use_invite
@@ -123,18 +123,22 @@ start_router = Router()
 async def cmd_start(message: Message, state: FSMContext):
     """Handler for /start command - start of registration process."""
     logger.info(f"Команда /start от пользователя {message.from_user.id}")
-    user = await get_user(message.from_user.id)
+    telegram_id = message.from_user.id
+    user = await get_user(telegram_id)
+    accounts = await get_user_accounts(telegram_id)
 
-    if user:
+    # Show main menu only when user exists and has at least one Opinion account
+    if user and accounts:
         await message.answer(
             MAIN_MENU_PREFIX + "Main menu",
             reply_markup=build_main_menu_keyboard().as_markup(),
         )
         return
 
+    # New user (not in DB)
     if not settings.invite_required:
         await save_user(
-            telegram_id=message.from_user.id,
+            telegram_id=telegram_id,
             username=message.from_user.username.strip()
             if message.from_user.username
             else None,

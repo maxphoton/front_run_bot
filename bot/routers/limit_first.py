@@ -26,14 +26,15 @@ from opinion.opinion_api_wrapper import (
 )
 from opinion_clob_sdk.chain.py_order_utils.model.sides import OrderSide
 from service.config import TICK_SIZE
-from routers.floating_order import calculate_target_price
-from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 from service.database import (
     get_opinion_account,
     get_user,
     get_user_accounts,
     save_order,
 )
+
+from routers.floating_order import calculate_target_price
+from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ async def start_limit_first_order(
     if not accounts:
         err = """❌ You don't have any Opinion profiles yet.
 
-Use /add_profile to add your first Opinion profile."""
+Use /start to add your first Opinion profile."""
         if isinstance(event, Message):
             await event.answer(err)
         else:

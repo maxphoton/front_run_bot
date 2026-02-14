@@ -1,7 +1,7 @@
 services:
   bot:
     build: .
-    container_name: opinion_bot_beta
+    container_name: front_run_bot
     restart: always
     env_file:
       - .env
@@ -13,8 +13,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     networks:
-      - opinion_bot_network
+      - front_run_bot_network
 
 networks:
-  opinion_bot_network:
+  front_run_bot_network:
     driver: bridge

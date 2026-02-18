@@ -425,9 +425,9 @@ async def process_account_orders(
             )
 
             logger.info(f"Цена изменилась для ордера {order_id}:")
-            logger.info(f"  👤 Account ID: {account_id} (User: {telegram_id})")
-            logger.info(f"  📊 Market ID: {market_id}")
-            logger.info(f"  🪙 Token: {token_name} {side}")
+            logger.info(f"  Account ID: {account_id} (User: {telegram_id})")
+            logger.info(f"  Market ID: {market_id}")
+            logger.info(f"  Token: {token_name} {side}")
             logger.info(f"  Старая текущая цена: {current_price_at_creation}")
             logger.info(f"  Новая текущая цена: {new_current_price}")
             logger.info(f"  Изменение текущей цены: {price_change:+.6f}")
@@ -671,7 +671,7 @@ async def send_price_change_notification(bot, telegram_id: int, notification: Di
             notification.get("reposition_threshold_cents")
         )
 
-        side_emoji = "📈" if notification["side"] == "BUY" else "📉"
+        side_emoji = """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>""" if notification["side"] == "BUY" else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
         change_sign = "+" if notification["price_change"] > 0 else ""
 
         # Status message - уведомление отправляется только когда ордер будет переставлен
@@ -687,10 +687,10 @@ async def send_price_change_notification(bot, telegram_id: int, notification: Di
         message = f"""🔔 <b>Price Change Detected</b>
 
 {side_emoji} <b>{notification["token_name"]} {notification["side"]}</b>
-📊 Market ID: {notification["market_id"]}
+<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {notification["market_id"]}
 🔗 <a href="{market_url}">Market Link</a>
 
-💰 <b>Current Price:</b>
+<tg-emoji emoji-id="5258260149037965799">�</tg-emoji> <b>Current Price:</b>
    Old: {old_price_cents:.2f} cents
    New: {new_price_cents:.2f} cents
    Change: {change_sign}{price_change_cents:.2f} cents
@@ -724,7 +724,7 @@ async def send_order_updated_notification(
         current_price_cents = order_params["current_price_at_creation"] * 100
         target_price_cents = order_params["target_price"] * 100
 
-        side_emoji = "📈" if order_params.get("side") == OrderSide.BUY else "📉"
+        side_emoji = """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>""" if order_params.get("side") == OrderSide.BUY else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
         side_text = "BUY" if order_params.get("side") == OrderSide.BUY else "SELL"
 
         # Формируем ссылку на маркет
@@ -735,15 +735,15 @@ async def send_order_updated_notification(
         message = f"""✅ <b>Order Updated Successfully</b>
 
 {side_emoji} <b>{order_params.get("token_name", "N/A")} {side_text}</b>
-📊 Market ID: {order_params["market_id"]}
+<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {order_params["market_id"]}
 🔗 <a href="{market_url}">Market Link</a>
 
 🆔 <b>New Order ID:</b>
 <code>{new_order_id}</code>
 
-💰 <b>Current Price:</b> {current_price_cents:.2f} cents
+<tg-emoji emoji-id="5258260149037965799">�</tg-emoji> <b>Current Price:</b> {current_price_cents:.2f} cents
 🎯 <b>Target Price:</b> {target_price_cents:.2f} cents
-💵 <b>Amount:</b> {order_params["amount"]} USDT
+<tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> <b>Amount:</b> {order_params["amount"]} USDT
 
 Order has been successfully moved to maintain the offset."""
 
@@ -773,7 +773,7 @@ async def send_order_placement_error_notification(
         current_price_cents = current_price * 100
         target_price_cents = target_price * 100
 
-        side_emoji = "📈" if order_params.get("side") == OrderSide.BUY else "📉"
+        side_emoji = """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>""" if order_params.get("side") == OrderSide.BUY else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
         side_text = "BUY" if order_params.get("side") == OrderSide.BUY else "SELL"
 
         # Формируем сообщение об ошибке с информацией из API
@@ -783,13 +783,13 @@ async def send_order_placement_error_notification(
         message = f"""❌ <b>Order Repositioning Failed</b>
 
 {side_emoji} <b>{order_params.get("token_name", "N/A")} {side_text}</b>
-📊 Market ID: {order_params.get("market_id", "N/A")}
+<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {order_params.get("market_id", "N/A")}
 
 🆔 <b>Cancelled Order ID:</b>
 <code>{old_order_id}</code>
 
-💰 <b>Target Price:</b> {target_price_cents:.2f} cents
-💵 <b>Amount:</b> {order_params.get("amount", "N/A")} USDT
+<tg-emoji emoji-id="5258260149037965799">�</tg-emoji> <b>Target Price:</b> {target_price_cents:.2f} cents
+<tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> <b>Amount:</b> {order_params.get("amount", "N/A")} USDT
 
 ⚠️ <b>{error_type}</b>
 {error_description}
@@ -848,7 +848,7 @@ async def send_order_filled_notification(bot, telegram_id: int, api_order):
             amount_display = str(filled_amount)
 
         # Эмодзи для направления
-        side_emoji = "📈" if side_enum == "Buy" else "📉"
+        side_emoji = """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>""" if side_enum == "Buy" else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
 
         # Формируем ссылку на корневой маркет
         if root_market_id:
@@ -871,14 +871,14 @@ async def send_order_filled_notification(bot, telegram_id: int, api_order):
         message = f"""🚨 <b>Order Filled - Action Required</b>
 
 {side_emoji} <b>{outcome} {side_enum}</b>
-📊 Market ID: {market_id}
-📋 Root Market: <a href="{market_url}">{market_link_text}</a>
+<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {market_id}
+<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> Root Market: <a href="{market_url}">{market_link_text}</a>
 
 🆔 <b>Order ID:</b>
 <code>{order_id}</code>
 
-💰 <b>Filled Price:</b> {price_display}¢
-💵 <b>Filled Amount:</b> {amount_display} USDT
+<tg-emoji emoji-id="5258260149037965799">�</tg-emoji> <b>Filled Price:</b> {price_display}¢
+<tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> <b>Filled Amount:</b> {amount_display} USDT
 
 Your order has been successfully filled! Please check the market and consider placing new orders. 🎉"""
 
@@ -1005,8 +1005,8 @@ async def async_sync_all_orders(bot, market_id: Optional[int] = None):
 
         logger.info(f"\n{'=' * 80}")
         logger.info(f"Обработка аккаунта {account_id} (пользователь {telegram_id})")
-        logger.info(f"⏰ Время начала: {account_start_time_str}")
-        logger.info(f"📊 Статус прокси: {proxy_status}")
+        logger.info(f"Время начала: {account_start_time_str}")
+        logger.info(f"Статус прокси: {proxy_status}")
         logger.info(f"{'=' * 80}")
 
         # Проверяем статус прокси
@@ -1120,7 +1120,7 @@ async def async_sync_all_orders(bot, market_id: Optional[int] = None):
                         else:
                             # Если нет result_data, считаем успешным если success=True
                             is_success = True
-                            logger.info(f"✅ Отменен ордер: {order_id}{market_id_info}")
+                            logger.info(f"Отменен ордер: {order_id}{market_id_info}")
                     else:
                         # Если success=False, собираем информацию об ошибке
                         error = result.get("error", "Unknown error")

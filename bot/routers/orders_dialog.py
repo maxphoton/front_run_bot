@@ -9,13 +9,14 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Back, Button, Group
 from aiogram_dialog.widgets.text import Const, Format
 from opinion.client_factory import create_client
-from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
 from service.database import (
     get_account_orders,
     get_opinion_account,
     get_order_by_id,
     update_order_status,
 )
+
+from routers.start import send_main_menu
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ async def get_orders_list_data(dialog_manager: DialogManager, **kwargs):
     orders_page = all_orders[start_idx:end_idx]
 
     # Формируем текст
-    text = f"""📋 <b>My Orders (created in bot)</b>
+    text = f"""<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> <b>My Orders (created in bot)</b>
 
 Total orders: {total}
 Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if total > 0 else 1}
@@ -101,7 +102,7 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
             )
 
             # Направление с эмодзи
-            side_emoji = "📈" if side == "BUY" else "📉"
+            side_emoji = """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>""" if side == "BUY" else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
 
             # Форматируем цену в центах
             target_price_cents = target_price * 100
@@ -109,7 +110,7 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
 
             text += f"""<b>{i}.</b> {status_emoji} {status.upper()} <code>{order_id}</code>
    {side_emoji} {side} {token_name} | {price_str}¢ | {amount} USDT
-   📊 Market ID: {market_id} | {market_title[:25]}...
+   <tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {market_id} | {market_title[:25]}...
    ⚙️ Reposition threshold: {reposition_threshold_cents:.2f}¢
    📅 {date_str}
 
@@ -182,12 +183,8 @@ To exit cancel mode, press the Cancel Order button again."""
 
 async def on_exit(callback: CallbackQuery, button: Button, manager: DialogManager):
     """Обработчик кнопки Exit - отправляет main menu и закрывает диалог."""
-    await callback.message.answer(
-        MAIN_MENU_PREFIX + "Main menu",
-        reply_markup=build_main_menu_keyboard().as_markup(),
-    )
+    await send_main_menu(callback)
     await manager.done()
-    await callback.answer()
 
 
 # Обработчик ввода order_id в режиме отмены
@@ -409,7 +406,7 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
         )
 
         # Направление с эмодзи
-        side_emoji = "📈" if side == "BUY" else "📉"
+        side_emoji = """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>""" if side == "BUY" else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
 
         # Форматируем цену в центах
         target_price_cents = target_price * 100
@@ -417,7 +414,7 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
 
         text += f"""<b>{i}.</b> {status_emoji} {status.upper()} <code>{order_id}</code>
    {side_emoji} {side} {token_name} | {price_str}¢ | {amount} USDT
-   📊 Market ID: {market_id} | {market_title[:25]}...
+   <tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {market_id} | {market_title[:25]}...
    ⚙️ Reposition threshold: {reposition_threshold_cents:.2f}¢
    📅 {date_str}
 

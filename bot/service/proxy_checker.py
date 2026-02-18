@@ -128,21 +128,21 @@ async def check_proxy_health(proxy_str: str, timeout: float = 10.0) -> str:
             ) as client:
                 response = await client.get("http://httpbin.org/ip", timeout=timeout)
                 if response.status_code == 200:
-                    logger.info(f"✅ Прокси {host}:{port} работает")
+                    logger.info(f"Прокси {host}:{port} работает")
                     return "working"
 
                 logger.warning(
-                    f"❌ Прокси {host}:{port} вернул статус {response.status_code}"
+                    f"Прокси {host}:{port} вернул статус {response.status_code}"
                 )
                 return "failed"
         except httpx.TimeoutException:
-            logger.warning(f"⏱️ Таймаут при проверке прокси {host}:{port}")
+            logger.warning(f"Таймаут при проверке прокси {host}:{port}")
             return "failed"
         except httpx.ProxyError as e:
-            logger.warning(f"❌ Ошибка прокси {host}:{port}: {e}")
+            logger.warning(f"Ошибка прокси {host}:{port}: {e}")
             return "failed"
         except Exception as e:
-            logger.error(f"❌ Ошибка при проверке прокси {host}:{port}: {e}")
+            logger.error(f"Ошибка при проверке прокси {host}:{port}: {e}")
             return "failed"
 
     retry_delays = [3, 5, 10]
@@ -154,7 +154,7 @@ async def check_proxy_health(proxy_str: str, timeout: float = 10.0) -> str:
             return "failed"
 
         wait = retry_delays[attempt]
-        logger.info(f"⏳ Повторная проверка прокси {host}:{port} через {wait} сек.")
+        logger.info(f"Повторная проверка прокси {host}:{port} через {wait} сек.")
         await asyncio.sleep(wait)
 
 

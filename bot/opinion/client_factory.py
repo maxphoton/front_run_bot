@@ -107,7 +107,7 @@ def create_client(account_data: dict) -> Client:
 
         # Логируем успешную установку прокси в SDK (без пароля)
         proxy_info = proxy_config["proxy_url"].replace("http://", "")
-        logger.info(f"✅ Прокси установлен в конфигурацию SDK: {proxy_info}")
+        logger.info(f"Прокси установлен в конфигурацию SDK: {proxy_info}")
 
     # Пересоздаем api_client с новой конфигурацией
     # Это необходимо, так как RESTClientObject создается при инициализации ApiClient

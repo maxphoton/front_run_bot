@@ -5,6 +5,7 @@ Handles help, support, and account checking commands.
 
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Union
 
 from aiogram import F, Router
@@ -12,7 +13,13 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, LinkPreviewOptions, Message
+from aiogram.types import (
+    CallbackQuery,
+    FSInputFile,
+    InputMediaPhoto,
+    LinkPreviewOptions,
+    Message,
+)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from opinion.client_factory import create_client
 from opinion.opinion_api_wrapper import (
@@ -30,7 +37,7 @@ from service.database import (
 )
 from service.proxy_checker import check_proxy_health
 
-from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
+from routers.start import send_main_menu
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +85,9 @@ Use /start to add your first Opinion profile."""
         if isinstance(event, Message):
             await event.answer(err)
         else:
-            await event.message.edit_text(err)
+            # Main menu message is a photo, so we cannot edit its text.
+            # Send a new text message instead of editing the original.
+            await event.message.answer(err)
             await event.answer()
         return
 
@@ -100,13 +109,13 @@ Use /start to add your first Opinion profile."""
     builder.button(text="✖️ Cancel", callback_data="cancel_check_account")
     builder.adjust(1)
 
-    text = """📊 Check Account
+    text = """<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Check Account
 
 Select an account to view statistics:"""
     if isinstance(event, Message):
         await event.answer(text, reply_markup=builder.as_markup())
     else:
-        await event.message.edit_text(text, reply_markup=builder.as_markup())
+        await event.message.answer(text, reply_markup=builder.as_markup())
         await event.answer()
 
 
@@ -208,14 +217,14 @@ async def show_account_info(message: Message, account_id: int):
         wallet = account["wallet_address"]
 
         # Формируем сообщение
-        account_info = f"""📊 <b>Profile Statistics</b>
+        account_info = f"""<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> <b>Profile Statistics</b>
 
 🆔 Account ID: {account_id}
 💼 Wallet: <code>{wallet}</code>
-💰 USDT Balance: {balance:.6f} USDT
-📋 Count open orders: {open_orders_count}
-📈 Open Positions: {positions_count}
-💵 Total Value in Positions: {total_value:.6f} USDT{proxy_info}
+<tg-emoji emoji-id="5258260149037965799">💵</tg-emoji> USDT Balance: {balance:.6f} USDT
+<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> Count open orders: {open_orders_count}
+<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji> Open Positions: {positions_count}
+<tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> Total Value in Positions: {total_value:.6f} USDT{proxy_info}
 
 You may see all orders by command '/orders'"""
 
@@ -232,39 +241,43 @@ You may see all orders by command '/orders'"""
         )
 
 
-HELP_DOC_URL = "https://bidask-bot.gitbook.io/docs/"
+HELP_DOC_URL = "https://opinionbot.gitbook.io/documentation/"
 
 HELP_MESSAGE = (
     "For information and instructions - see documentation: "
-    f'<a href="{HELP_DOC_URL}">https://bidask-bot.gitbook.io/docs/</a>'
+    f'<a href="{HELP_DOC_URL}">https://opinionbot.gitbook.io/documentation/</a>'
 )
+
+MENU_IMAGE_PATH = Path(__file__).resolve().parent.parent.parent / "files" / "docs.png"
 
 
 def _build_help_keyboard() -> InlineKeyboardBuilder:
     """Help message keyboard with Main menu button."""
     builder = InlineKeyboardBuilder()
-    builder.button(text="🏠 Main menu", callback_data="show_main_menu")
+    builder.button(text="Main menu", callback_data="show_main_menu", icon_custom_emoji_id="5257963315258204021")
     return builder
 
 
 async def send_help_content(event: Union[Message, CallbackQuery]) -> None:
-    """Send short help with doc link (from command or menu callback). Link preview disabled."""
+    """Send short help with menu image, caption and doc link. Link preview disabled."""
     link_preview = LinkPreviewOptions(is_disabled=True)
     markup = _build_help_keyboard().as_markup()
     if isinstance(event, Message):
-        await event.answer(
-            HELP_MESSAGE,
+        photo = FSInputFile(MENU_IMAGE_PATH)
+        await event.answer_photo(
+            photo=photo,
+            caption=HELP_MESSAGE,
             parse_mode=ParseMode.HTML,
             link_preview_options=link_preview,
             reply_markup=markup,
         )
     else:
-        await event.message.edit_text(
-            HELP_MESSAGE,
+        media = InputMediaPhoto(
+            media=FSInputFile(MENU_IMAGE_PATH),
+            caption=HELP_MESSAGE,
             parse_mode=ParseMode.HTML,
-            link_preview_options=link_preview,
-            reply_markup=markup,
         )
+        await event.message.edit_media(media=media, reply_markup=markup)
         await event.answer()
 
 
@@ -284,11 +297,7 @@ async def menu_help(callback: CallbackQuery):
 @user_router.callback_query(F.data == "show_main_menu")
 async def show_main_menu(callback: CallbackQuery):
     """From help (or other): show main menu with buttons."""
-    await callback.message.edit_text(
-        MAIN_MENU_PREFIX + "Main menu",
-        reply_markup=build_main_menu_keyboard().as_markup(),
-    )
-    await callback.answer()
+    await send_main_menu(callback, edit=True)
 
 
 @user_router.message(Command("support"))

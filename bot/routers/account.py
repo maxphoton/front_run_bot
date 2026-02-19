@@ -333,19 +333,16 @@ async def save_and_notify_account(
             )
 
         await message.answer(
-            f"""✅ <b>Profile added successfully!</b>
+            f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> <b>Profile added successfully!</b>
 
-🆔 Profile ID: <code>{account_id}</code>
-💼 Wallet: <code>{wallet_address}</code>
-💰 Balance: <b>{balance:.6f} USDT</b>{proxy_info}""",
+
+<tg-emoji emoji-id="5258204546391351475">💼</tg-emoji> Wallet: <code>{wallet_address}</code>
+<tg-emoji emoji-id="5258260149037965799">💵</tg-emoji> Balance: <b>{balance:.6f} USDT</b>{proxy_info}""",
             parse_mode="HTML",
         )
-        from routers.start import MAIN_MENU_PREFIX, build_main_menu_keyboard
+        from routers.start import send_main_menu
 
-        await message.answer(
-            MAIN_MENU_PREFIX + "Main menu",
-            reply_markup=build_main_menu_keyboard().as_markup(),
-        )
+        await send_main_menu(message)
 
     except Exception as e:
         logger.error(f"Ошибка при добавлении аккаунта: {e}")
@@ -375,7 +372,7 @@ async def cmd_list_accounts(message: Message):
     accounts = await get_user_accounts(telegram_id)
     if not accounts:
         await message.answer(
-            """📋 You don't have any profiles yet.
+            """<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> You don't have any profiles yet.
 
 Use /add_profile to add your first Opinion profile."""
         )
@@ -401,7 +398,7 @@ Use /add_profile to add your first Opinion profile."""
             f"{i}. <b>Profile ID:</b> {account_id}\n   <b>Wallet:</b> {wallet}{proxy_info}"
         )
 
-    message_text = f"""📋 Your Opinion Profiles
+    message_text = f"""<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> Your Opinion Profiles
 
 You can use /add_profile, /remove_profile or /check_profile commands
 
@@ -429,7 +426,7 @@ async def cmd_remove_account(message: Message):
     accounts = await get_user_accounts(telegram_id)
     if not accounts:
         await message.answer(
-            """📋 You don't have any profiles to remove.
+            """<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> You don't have any profiles to remove.
 
 Use /add_profile to add an Opinion Profile."""
         )

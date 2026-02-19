@@ -347,15 +347,15 @@ class WebSocketTestMonitor:
         # Формируем сообщение для админа
         info_message = f"""🔔 <b>WebSocket: Обновление цены (Trade)</b>
 
-📊 <b>Market ID:</b> {market_id}
+<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> <b>Market ID:</b> {market_id}
 🪙 <b>Token ID:</b> {token_id or "N/A"}
-📈 <b>Outcome Side:</b> {outcome_side or "N/A"}
-💰 <b>Price:</b> {price or "N/A"}
+<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji> <b>Outcome Side:</b> {outcome_side or "N/A"}
+<tg-emoji emoji-id="5258260149037965799">💵</tg-emoji> <b>Price:</b> {price or "N/A"}
 📦 <b>Side:</b> {side or "N/A"}
-📊 <b>Shares:</b> {shares or "N/A"}
-💵 <b>Amount:</b> {amount or "N/A"}
+<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> <b>Shares:</b> {shares or "N/A"}
+<tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> <b>Amount:</b> {amount or "N/A"}
 
-📋 <b>Найдено pending ордеров:</b> {orders_count}
+<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> <b>Найдено pending ордеров:</b> {orders_count}
 
 <b>Что будет сделано:</b>
 """

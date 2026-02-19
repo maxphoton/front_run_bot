@@ -125,6 +125,8 @@ import traceback
 from html import escape
 from typing import Dict, List, Optional, Tuple
 
+from aiogram.types import LinkPreviewOptions
+
 from opinion.client_factory import create_client
 from opinion.opinion_api_wrapper import (
     ORDER_STATUS_CANCELED,
@@ -712,7 +714,13 @@ async def send_price_change_notification(bot, telegram_id: int, notification: Di
 
 {status_emoji} <b>Status:</b> {status_text}"""
 
-        await bot.send_message(chat_id=telegram_id, text=message, parse_mode="HTML")
+        link_preview = LinkPreviewOptions(is_disabled=True)
+        await bot.send_message(
+            chat_id=telegram_id,
+            text=message,
+            parse_mode="HTML",
+            link_preview_options=link_preview,
+        )
         logger.info(
             f"Sent price change notification to user {telegram_id} for order {notification['order_id']}"
         )
@@ -760,7 +768,13 @@ async def send_order_updated_notification(
 
 Order has been successfully moved to maintain the offset."""
 
-        await bot.send_message(chat_id=telegram_id, text=message, parse_mode="HTML")
+        link_preview = LinkPreviewOptions(is_disabled=True)
+        await bot.send_message(
+            chat_id=telegram_id,
+            text=message,
+            parse_mode="HTML",
+            link_preview_options=link_preview,
+        )
         logger.info(
             f"Sent order updated notification to user {telegram_id} for order {new_order_id}"
         )
@@ -813,7 +827,13 @@ async def send_order_placement_error_notification(
 
 <b>⚠️ IMPORTANT:</b> Your old order has been cancelled. Please check your balance and place a new order manually if needed."""
 
-        await bot.send_message(chat_id=telegram_id, text=message)
+        link_preview = LinkPreviewOptions(is_disabled=True)
+        await bot.send_message(
+            chat_id=telegram_id,
+            text=message,
+            parse_mode="HTML",
+            link_preview_options=link_preview,
+        )
         logger.info(
             f"Sent order placement error notification to user {telegram_id} for order {old_order_id}"
         )
@@ -911,7 +931,13 @@ async def send_order_filled_notification(bot, telegram_id: int, api_order):
 
 Your order has been successfully filled! Please check the market and consider placing new orders. 🎉"""
 
-        await bot.send_message(chat_id=telegram_id, text=message, parse_mode="HTML")
+        link_preview = LinkPreviewOptions(is_disabled=True)
+        await bot.send_message(
+            chat_id=telegram_id,
+            text=message,
+            parse_mode="HTML",
+            link_preview_options=link_preview,
+        )
         logger.info(
             f"Отправлено уведомление об исполнении ордера {order_id} пользователю {telegram_id}"
         )
@@ -967,7 +993,13 @@ The following orders could not be cancelled:
 • Please check the orders manually and cancel them if needed
 • The repositioning will be retried in the next sync cycle"""
 
-        await bot.send_message(chat_id=telegram_id, text=message)
+        link_preview = LinkPreviewOptions(is_disabled=True)
+        await bot.send_message(
+            chat_id=telegram_id,
+            text=message,
+            parse_mode="HTML",
+            link_preview_options=link_preview,
+        )
         logger.info(
             f"Sent cancellation error notification to user {telegram_id} for {len(failed_orders)} failed orders"
         )

@@ -42,23 +42,21 @@ Telegram bot for [Opinion.trade](https://app.opinion.trade) prediction markets: 
 - **Statistics**: Admin command `/stats` to view database statistics
 - **Re-registration Support**: Deleted users can register again with a new invite code
 
-### 📊 Market Order Placement
-- **Interactive Flow**: Step-by-step process for placing limit orders
-- **Market Analysis**: View market information including:
-  - Best bid/ask prices for YES and NO tokens
-  - Spread and liquidity metrics
-  - Top 5 bids and asks with price visualization in cents
-- **Smart Validation**: Automatic balance checks and price validation
-- **Categorical Markets**: Support for multi-outcome markets with submarket selection
-- **Reposition Threshold**: Configurable threshold (in cents) for when orders should be repositioned
-- **Error Handling**: Clear error messages when API calls fail
+### 📊 Order Placement (Market, Limit, Always-First)
+- **Unified side and direction**: One step with four inline buttons — BUY YES, BUY NO, SELL YES, SELL NO (no separate “side” then “direction” steps)
+- **Market info**: Best bid/ask and liquidity for YES and NO; link preview disabled for Opinion.trade URLs
+- **Market orders**: BUY = amount in USDT; SELL = amount in shares (outcome tokens); API uses `makerAmountInQuoteToken` for BUY and `makerAmountInBaseToken` for SELL
+- **Limit / Always-first**: Amount in USDT for both BUY and SELL (SELL = USDT to receive)
+- **Categorical markets**: Submarket selection for multi-outcome markets
+- **Validation**: Balance checks (BUY), price and amount validation; minimum order value 1.30 USDT on exchange
+- **Error handling**: Clear error messages when API calls fail
 
 ### 💰 Order Management
 - **Order List**: View all your orders with pagination (`/orders` command)
 - **Order Search**: Search orders by order ID, market ID, market title, token name, or side
 - **Order Cancellation**: Cancel orders directly from the bot interface with detailed error messages
 - **Price Offset in Cents**: Set order prices relative to best bid using intuitive cent-based offsets
-- **Direction Selection**: Choose BUY (below current price) or SELL (above current price, can be used to sell shares)
+- **Side and direction**: Single step with BUY YES, BUY NO, SELL YES, SELL NO
 - **Order Confirmation**: Review all settings before placing orders
 - **Order Status Tracking**: View order status (pending, finished, canceled)
 - **Bot-Only Orders**: Only orders created through the bot can be managed; manually placed orders are not displayed
@@ -137,7 +135,7 @@ Telegram bot for [Opinion.trade](https://app.opinion.trade) prediction markets: 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd trade_bot
+cd front_run_bot
 ```
 
 2. Install dependencies:
@@ -207,7 +205,9 @@ Use the **main menu** (inline buttons after `/start` or on any unknown message) 
 - **Limit order**: Main menu “Limit order” or `/limit` – place a limit order at a custom price
 - **Always-first order**: Main menu “Always-first order” or `/limit_first` – place a limit order that stays at the top of the order book
 
-Flow (for any order type): select account (if multiple), enter market URL from Opinion.trade, for categorical markets select submarket, review market info, enter amount, side (YES/NO), direction (BUY/SELL), confirm and place.
+Flow (for any order type): select account (if multiple), enter market URL from Opinion.trade, for categorical markets select submarket, review market info (YES/NO bid-ask and liquidity), choose side and direction in one step (buttons: BUY YES, BUY NO, SELL YES, SELL NO), enter amount, then confirm and place.
+
+**Amount:** For **market** orders: BUY = amount in USDT (spend); SELL = number of shares (outcome tokens) to sell. For **limit** and **limit_first**: amount is always in USDT (BUY = spend, SELL = USDT you want to receive). Minimum order value on the exchange is 1.30 USDT.
 
 ### Managing Orders
 
@@ -245,10 +245,12 @@ bot/
 │   ├── market.py            # Market order (/market)
 │   ├── limit.py             # Limit order (/limit)
 │   ├── limit_first.py       # Always-first order (/limit_first)
+│   ├── floating_order.py    # Helper (calculate_target_price for limit_first); /floating_order router defined but not registered in main
 │   ├── orders.py            # Orders management router (/orders command)
 │   ├── orders_dialog.py     # Order management dialog (aiogram-dialog)
 │   ├── users.py             # User commands (/help, /support, /check_profile)
 │   ├── admin.py             # Admin commands (/get_db, /get_invites, /delete_user, /stats)
+│   ├── plug.py              # Fallback (main menu on unknown messages)
 │   └── invites.py           # Invite management functions
 ├── service/                 # Core services
 │   ├── config.py            # Configuration and settings management
@@ -274,14 +276,14 @@ bot/
 
 The bot uses a modular router-based architecture:
 
-- **Routers**: Separate routers for different features in `routers/`
-  - `start.py` - Registration, main menu keyboard
-  - `account.py` - Account management (add/list/remove profile; disabled when ONE_ACCOUNT)
-  - `market.py`, `limit.py`, `limit_first.py` - Order placement
-  - `orders.py` / `orders_dialog.py` - Order management
-  - `users.py` - Help, support, check_profile (Portfolio)
-  - `admin.py` - Admin commands
-  - `plug.py` - Fallback: show main menu on unknown messages
+- **Routers**: Separate routers in `routers/`
+  - `start.py` — Registration, main menu
+  - `account.py` — Add/list/remove profile (disabled when ONE_ACCOUNT)
+  - `market.py`, `limit.py`, `limit_first.py` — Order placement (unified side+direction: BUY YES/NO, SELL YES/NO)
+  - `orders.py` / `orders_dialog.py` — Order management
+  - `users.py` — Help, support, Portfolio
+  - `admin.py` — Admin commands
+  - `plug.py` — Fallback: main menu on unknown messages
 - **Services**: Core services in `service/` directory
   - `config.py` - Configuration management
   - `database.py` - Database operations
@@ -395,18 +397,17 @@ The bot will soon transition to WebSocket-based synchronization for real-time or
 
 ## Dependencies
 
-- `aiogram==3.23.0` - Telegram Bot API framework
-- `aiogram-dialog==2.4.0` - Dialog system for complex interactions
-- `aiosqlite==0.22.0` - Async SQLite driver for non-blocking database operations
-- `opinion-clob-sdk==0.4.3` - Opinion.trade SDK for market interactions
-- `cryptography==46.0.3` - AES-GCM encryption
-- `pydantic==2.12.5` - Settings management
-- `pydantic-settings==2.12.0` - Environment variable settings
-- `python-dotenv==1.2.1` - Environment variable loading
-- `httpx==0.28.1` - HTTP client for proxy checking
-- `websockets==14.0` - WebSocket client for real-time order synchronization (planned)
-- `pytest==9.0.2` - Testing framework (development)
-- `pytest-asyncio==1.3.0` - Async test support (development)
+- `aiogram==3.25.0` — Telegram Bot API framework
+- `aiogram-dialog==2.4.0` — Dialog system for complex interactions
+- `aiosqlite==0.22.0` — Async SQLite driver
+- `opinion-clob-sdk==0.4.3` — Opinion.trade SDK
+- `cryptography==46.0.3` — AES-GCM encryption
+- `pydantic==2.12.5`, `pydantic-settings==2.12.0` — Settings
+- `python-dotenv==1.2.1` — Environment variables
+- `httpx==0.28.1` — HTTP client (proxy checking)
+- `websockets==14.0` — WebSocket client (planned real-time sync)
+- `pytest==9.0.2`, `pytest-asyncio==1.3.0` — Tests (development)
+- `requests`, `requests-oauthlib` — Optional OAuth/HTTP
 
 ## Technical Details
 

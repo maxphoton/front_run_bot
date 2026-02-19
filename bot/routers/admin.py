@@ -58,7 +58,8 @@ async def cmd_get_db(message: Message):
         zip_file = BufferedInputFile(zip_content, filename="database_export.zip")
 
         await message.answer_document(
-            document=zip_file, caption="""<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Database export (all tables)"""
+            document=zip_file,
+            caption="""<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Database export (all tables)""",
         )
         logger.info(f"Администратор {message.from_user.id} экспортировал базу данных")
 

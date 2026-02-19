@@ -276,7 +276,9 @@ Please contact administrator via /support and provide the error code above."""
 
     # Show market name after successful retrieval
     market_title = getattr(market, "market_title", "Unknown Market")
-    await message.answer(f"""✅ Market found: <b>{market_title}</b>""")
+    await message.answer(
+        f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> Market found: <b>{market_title}</b>"""
+    )
 
     # If this is a categorical market, need to select submarket
     if is_categorical:
@@ -457,7 +459,7 @@ Possible reasons:
     builder.adjust(2)
 
     await message.answer(
-        f"""Market Found: {market.market_title}
+        f"""<b>Market Found: {market.market_title}</b>
 
 {market_info_text}
 
@@ -695,7 +697,7 @@ Enter a different amount:""",
         current_price_str = f"{current_price_cents:.2f}".rstrip("0").rstrip(".")
 
         await message.answer(
-            f"""✅ Amount: {amount} USDT
+            f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> Amount: {amount} USDT
 
 <tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> Current price: {current_price_str}¢
 
@@ -767,7 +769,7 @@ async def process_side(callback: CallbackQuery, state: FSMContext):
     current_price_str = f"{current_price_cents:.2f}".rstrip("0").rstrip(".")
 
     await callback.message.edit_text(
-        f"""✅ Selected: {token_name}
+        f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> Selected: {token_name}
 
 <tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> Current price: {current_price_str}¢
 
@@ -931,7 +933,7 @@ async def process_direction(callback: CallbackQuery, state: FSMContext):
     builder.button(text="✖️ Cancel", callback_data="cancel")
 
     await callback.message.edit_text(
-        f"""✅ Selected direction: {direction} {token_name}
+        f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> Selected direction: {direction} {token_name}
 
 <tg-emoji emoji-id="5258260149037965799">💵</tg-emoji> Enter the amount for farming (in USDT, e.g. 10):""",
         reply_markup=builder.as_markup(),
@@ -1084,7 +1086,9 @@ async def process_confirm(callback: CallbackQuery, state: FSMContext):
     except Exception:
         pass  # Ignore if query is too old
 
-    await callback.message.edit_text("""🔄 Placing order...""")
+    await callback.message.edit_text(
+        """<tg-emoji emoji-id="5260687119092817530">🔄</tg-emoji> Placing order..."""
+    )
 
     success, order_id, error_message = await place_limit_order(client, order_params)
 
@@ -1162,7 +1166,7 @@ async def process_confirm(callback: CallbackQuery, state: FSMContext):
             logger.error(f"Error saving order to DB: {e}")
 
         await callback.message.edit_text(
-            f"""✅ <b>Order successfully placed!</b>
+            f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> <b>Order successfully placed!</b>
 
 <tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> <b>Final Information:</b>
 • Side: {data.get("direction")} {data.get("token_name")}
@@ -1170,22 +1174,13 @@ async def process_confirm(callback: CallbackQuery, state: FSMContext):
 • Amount: {data.get("amount", 0)} USDT
 • Offset: {offset_cents:.2f}¢
 • Reposition threshold: {reposition_threshold_cents:.2f}¢
-• Order ID: <code>{order_id}</code>
-
-📌 <b>Useful commands:</b>
-• /floating_order - start a new farm
-• /orders - manage your orders
-• /check_profile - view profile statistics"""
+• Order ID: <code>{order_id}</code>"""
         )
     else:
         error_text = f"""❌ <b>Failed to place order</b>
 
-{error_message if error_message else "Please check your balance and order parameters."}
-
-📌 <b>Useful commands:</b>
-• /floating_order - start a new farm
-• /orders - manage your orders
-• /check_profile - view profile statistics"""
+{error_message if error_message else "Please check your balance and order parameters."}"""
         await callback.message.edit_text(error_text)
 
     await state.clear()
+    await send_main_menu(callback)

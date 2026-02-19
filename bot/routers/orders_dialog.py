@@ -102,7 +102,11 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
             )
 
             # Направление с эмодзи
-            side_emoji = """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>""" if side == "BUY" else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
+            side_emoji = (
+                """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>"""
+                if side == "BUY"
+                else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
+            )
 
             # Форматируем цену в центах
             target_price_cents = target_price * 100
@@ -406,7 +410,11 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
         )
 
         # Направление с эмодзи
-        side_emoji = """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>""" if side == "BUY" else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
+        side_emoji = (
+            """<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji>"""
+            if side == "BUY"
+            else """<tg-emoji emoji-id="5258391025281408576">📉</tg-emoji>"""
+        )
 
         # Форматируем цену в центах
         target_price_cents = target_price * 100

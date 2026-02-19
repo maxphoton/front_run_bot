@@ -45,7 +45,6 @@ class LimitOrderStates(StatesGroup):
     waiting_url = State()
     waiting_submarket = State()
     waiting_side = State()
-    waiting_direction = State()
     waiting_amount = State()
     waiting_limit_price = State()
     waiting_confirm = State()
@@ -145,9 +144,17 @@ Use /start to add your first Opinion profile."""
 
 Please enter the <a href="https://app.opinion.trade?code=BJea79">Opinion.trade</a> market link:"""
         if isinstance(event, Message):
-            await event.answer(text, reply_markup=builder.as_markup())
+            await event.answer(
+                text,
+                reply_markup=builder.as_markup(),
+                disable_web_page_preview=True,
+            )
         else:
-            await event.message.answer(text, reply_markup=builder.as_markup())
+            await event.message.answer(
+                text,
+                reply_markup=builder.as_markup(),
+                disable_web_page_preview=True,
+            )
             await event.answer()
         await state.set_state(LimitOrderStates.waiting_url)
         return
@@ -206,6 +213,7 @@ async def process_account_selection(callback: CallbackQuery, state: FSMContext):
 
 Please enter the <a href="https://app.opinion.trade?code=BJea79">Opinion.trade</a> market link:""",
         reply_markup=builder.as_markup(),
+        disable_web_page_preview=True,
     )
     await state.set_state(LimitOrderStates.waiting_url)
     await callback.answer()
@@ -282,7 +290,9 @@ Please contact administrator via /support and provide the error code above."""
         return
 
     market_title = getattr(market, "market_title", "Unknown Market")
-    await message.answer(f"""✅ Market found: <b>{market_title}</b>""")
+    await message.answer(
+        f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> Market found: <b>{market_title}</b>"""
+    )
 
     if is_categorical:
         submarkets = get_categorical_market_submarkets(market)
@@ -446,13 +456,31 @@ Possible reasons:
     market_info_text = "\n\n".join(market_info_parts) if market_info_parts else ""
 
     builder = InlineKeyboardBuilder()
-    builder.button(text="✅ YES", callback_data="limit_side_yes")
-    builder.button(text="❌ NO", callback_data="limit_side_no")
+    builder.button(
+        text="✅ BUY YES",
+        callback_data="limit_side_buy_yes",
+        style="success",
+    )
+    builder.button(
+        text="❌ BUY NO",
+        callback_data="limit_side_buy_no",
+        style="success",
+    )
+    builder.button(
+        text="✅ SELL YES",
+        callback_data="limit_side_sell_yes",
+        style="danger",
+    )
+    builder.button(
+        text="❌ SELL NO",
+        callback_data="limit_side_sell_no",
+        style="danger",
+    )
     builder.button(text="✖️ Cancel", callback_data="limit_cancel")
     builder.adjust(2)
 
     await message.answer(
-        f"""Market Found: {market.market_title}
+        f"""<b>Market Found: {market.market_title}</b>
 
 {market_info_text}
 
@@ -528,8 +556,14 @@ async def process_submarket(callback: CallbackQuery, state: FSMContext):
     F.data.startswith("limit_side_"), LimitOrderStates.waiting_side
 )
 async def process_side(callback: CallbackQuery, state: FSMContext):
-    """Handles side selection (YES/NO)."""
-    side = callback.data.split("_")[2].upper()
+    """Handles combined side and direction selection."""
+    parts = callback.data.split("_")
+    if len(parts) < 4:
+        await callback.answer("Invalid selection", show_alert=True)
+        return
+
+    direction = parts[2].upper()
+    side = parts[3].upper()
     data = await state.get_data()
 
     if side == "YES":
@@ -551,51 +585,25 @@ async def process_side(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
         return
 
+    order_side = OrderSide.BUY if direction == "BUY" else OrderSide.SELL
+
     await state.update_data(
         token_id=token_id,
         token_name=token_name,
         current_price=current_price,
+        direction=direction,
+        order_side=order_side,
     )
 
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="BUY (limit buy)",
-        callback_data="limit_dir_buy",
-        icon_custom_emoji_id="5258391025281408576",
-    )
-    builder.button(text="📉 SELL (limit sell)", callback_data="limit_dir_sell")
-    builder.button(text="✖️ Cancel", callback_data="limit_cancel")
-    builder.adjust(1)
+    builder = build_cancel_keyboard("limit_cancel")
 
     current_price_cents = current_price * 100
     current_price_str = f"{current_price_cents:.2f}".rstrip("0").rstrip(".")
 
     await callback.message.edit_text(
-        f"""✅ Selected: {token_name}
+        f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> Selected: {direction} {token_name}
 
 <tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> Current price: {current_price_str}¢
-
-Select order direction:""",
-        reply_markup=builder.as_markup(),
-    )
-    await callback.answer()
-    await state.set_state(LimitOrderStates.waiting_direction)
-
-
-@limit_order_router.callback_query(
-    F.data.startswith("limit_dir_"), LimitOrderStates.waiting_direction
-)
-async def process_direction(callback: CallbackQuery, state: FSMContext):
-    """Handles direction selection (BUY/SELL)."""
-    direction = callback.data.split("_")[2].upper()
-    data = await state.get_data()
-    token_name = data.get("token_name")
-    order_side = OrderSide.BUY if direction == "BUY" else OrderSide.SELL
-
-    await state.update_data(direction=direction, order_side=order_side)
-    builder = build_cancel_keyboard("limit_cancel")
-    await callback.message.edit_text(
-        f"""✅ Selected direction: {direction} {token_name}
 
 <tg-emoji emoji-id="5258260149037965799">💵</tg-emoji> Enter the amount (in USDT, e.g. 10):""",
         reply_markup=builder.as_markup(),
@@ -665,7 +673,7 @@ Enter a different amount:""",
 
     builder = build_cancel_keyboard("limit_cancel")
     await message.answer(
-        f"""✅ Amount: {amount} USDT
+        f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> Amount: {amount} USDT
 
 <tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> Current price: {current_price_str}¢
 Tick size: {tick_size_str}¢
@@ -754,7 +762,9 @@ async def process_confirm(callback: CallbackQuery, state: FSMContext):
     }
 
     await callback.answer()
-    await callback.message.edit_text("""🔄 Placing limit order...""")
+    await callback.message.edit_text(
+        """<tg-emoji emoji-id="5260687119092817530">🔄</tg-emoji> Placing limit order..."""
+    )
 
     success, order_id, error_message = await place_limit_order(client, order_params)
 
@@ -796,33 +806,22 @@ async def process_confirm(callback: CallbackQuery, state: FSMContext):
             logger.error("Error saving limit order to DB: %s", exc)
 
         await callback.message.edit_text(
-            f"""✅ <b>Limit order placed!</b>
+            f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> <b>Limit order placed!</b>
 
 • Side: {data.get("direction")} {data.get("token_name")}
 • Price: {data.get("target_price", 0):.6f}
 • Amount: {data.get("amount", 0)} USDT
-• Order ID: <code>{order_id}</code>
-
-📌 <b>Useful commands:</b>
-• /limit - place a limit order
-• /limit_first - place a fixed offset limit order
-• /market - place a market order
-• /orders - manage your orders"""
+• Order ID: <code>{order_id}</code>"""
         )
     else:
         await callback.message.edit_text(
             f"""❌ <b>Failed to place limit order</b>
 
-{error_message if error_message else "Please check your balance and order parameters."}
-
-📌 <b>Useful commands:</b>
-• /limit - place a limit order
-• /limit_first - place a fixed offset limit order
-• /market - place a market order
-• /orders - manage your orders"""
+{error_message if error_message else "Please check your balance and order parameters."}"""
         )
 
     await state.clear()
+    await send_main_menu(callback)
 
 
 @limit_order_router.callback_query(F.data == "limit_cancel")

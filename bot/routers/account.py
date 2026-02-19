@@ -333,10 +333,10 @@ async def save_and_notify_account(
             )
 
         await message.answer(
-            f"""✅ <b>Profile added successfully!</b>
+            f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> <b>Profile added successfully!</b>
 
-🆔 Profile ID: <code>{account_id}</code>
-💼 Wallet: <code>{wallet_address}</code>
+
+<tg-emoji emoji-id="5258204546391351475">💼</tg-emoji> Wallet: <code>{wallet_address}</code>
 <tg-emoji emoji-id="5258260149037965799">💵</tg-emoji> Balance: <b>{balance:.6f} USDT</b>{proxy_info}""",
             parse_mode="HTML",
         )

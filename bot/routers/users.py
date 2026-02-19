@@ -219,14 +219,13 @@ async def show_account_info(message: Message, account_id: int):
         # Формируем сообщение
         account_info = f"""<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> <b>Profile Statistics</b>
 
-🆔 Account ID: {account_id}
-💼 Wallet: <code>{wallet}</code>
+<tg-emoji emoji-id="5258204546391351475">💼</tg-emoji> Wallet: <code>{wallet}</code>
 <tg-emoji emoji-id="5258260149037965799">💵</tg-emoji> USDT Balance: {balance:.6f} USDT
 <tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> Count open orders: {open_orders_count}
 <tg-emoji emoji-id="5258391025281408576">📈</tg-emoji> Open Positions: {positions_count}
 <tg-emoji emoji-id="5258204546391351475">💵</tg-emoji> Total Value in Positions: {total_value:.6f} USDT{proxy_info}
 
-You may see all orders by command '/orders'"""
+You may see all orders by command  /orders"""
 
         await message.answer(
             account_info,
@@ -254,7 +253,11 @@ MENU_IMAGE_PATH = Path(__file__).resolve().parent.parent.parent / "files" / "doc
 def _build_help_keyboard() -> InlineKeyboardBuilder:
     """Help message keyboard with Main menu button."""
     builder = InlineKeyboardBuilder()
-    builder.button(text="Main menu", callback_data="show_main_menu", icon_custom_emoji_id="5257963315258204021")
+    builder.button(
+        text="Main menu",
+        callback_data="show_main_menu",
+        icon_custom_emoji_id="5257963315258204021",
+    )
     return builder
 
 

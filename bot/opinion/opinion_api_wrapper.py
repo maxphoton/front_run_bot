@@ -249,17 +249,40 @@ async def place_market_order(
         (success, order_id, error_message)
     """
     try:
-        order_data = PlaceOrderDataInput(
+        # Для рыночных ордеров SDK запрещает использовать makerAmountInQuoteToken
+        # на стороне SELL (docs: makerAmountInQuoteToken is not allowed for market sell).
+        # - BUY: makerAmountInQuoteToken — сумма в USDT (human-readable decimal, str).
+        # - SELL: makerAmountInBaseToken — кол-во outcome tokens / shares (human-readable, str).
+        # По docs.opinion.trade amounts передаём в human-readable decimal format, строками.
+        amount_raw = order_params["amount"]
+        amount_float = float(amount_raw) if isinstance(amount_raw, str) else amount_raw
+        amount_str = str(int(amount_float)) if amount_float == int(amount_float) else str(amount_float)
+
+        side_obj = order_params["side"]
+        side_str = str(side_obj).upper()
+        is_buy = "BUY" in side_str
+
+        common_kwargs = dict(
             marketId=order_params["market_id"],
             tokenId=order_params["token_id"],
-            side=order_params["side"],
+            side=side_obj,
             orderType=MARKET_ORDER,
             price="0",
-            makerAmountInQuoteToken=order_params["amount"],
         )
 
+        if is_buy:
+            order_data = PlaceOrderDataInput(
+                **common_kwargs,
+                makerAmountInQuoteToken=amount_str,
+            )
+        else:
+            order_data = PlaceOrderDataInput(
+                **common_kwargs,
+                makerAmountInBaseToken=amount_str,
+            )
+
         def _place_order_sync():
-            return client.place_limit_order(order_data, check_approval=True)
+            return client.place_order(order_data, check_approval=True)
 
         result = await asyncio.to_thread(_place_order_sync)
 
@@ -346,7 +369,7 @@ async def place_limit_order(
         )
 
         def _place_order_sync():
-            return client.place_limit_order(order_data, check_approval=True)
+            return client.place_order(order_data, check_approval=True)
 
         result = await asyncio.to_thread(_place_order_sync)
 

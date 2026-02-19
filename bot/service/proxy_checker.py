@@ -216,7 +216,7 @@ The proxy will be automatically checked every 10 minutes."""
                 )
             elif old_status == "failed" and new_status == "working":
                 # Прокси восстановился
-                message = f"""✅ <b>Proxy restored</b>
+                message = f"""<tg-emoji emoji-id="5260341314095947411">✅</tg-emoji> <b>Proxy restored</b>
 
 Proxy for Opinion profile is working again.
 

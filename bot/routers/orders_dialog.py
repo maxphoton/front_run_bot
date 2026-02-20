@@ -87,7 +87,9 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
             status = order.get("status", "unknown")
             # Нормализуем статус: приводим к нижнему регистру и убираем пробелы
             status = str(status).lower().strip() if status else "unknown"
-            reposition_threshold_cents = float(order.get("reposition_threshold_cents"))
+            reposition_threshold_cents = float(
+                order.get("reposition_threshold_cents") or 0.5
+            )
 
             created_at = order.get("created_at")
             # SQLite возвращает TIMESTAMP как строку в формате "YYYY-MM-DD HH:MM:SS"
@@ -115,7 +117,6 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
             text += f"""<b>{i}.</b> {status_emoji} {status.upper()} <code>{order_id}</code>
    {side_emoji} {side} {token_name} | {price_str}¢ | {amount} USDT
    <tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {market_id} | {market_title[:25]}...
-   ⚙️ Reposition threshold: {reposition_threshold_cents:.2f}¢
    📅 {date_str}
 
 """
@@ -395,7 +396,9 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
         status = order.get("status", "unknown")
         # Нормализуем статус: приводим к нижнему регистру и убираем пробелы
         status = str(status).lower().strip() if status else "unknown"
-        reposition_threshold_cents = float(order.get("reposition_threshold_cents"))
+        reposition_threshold_cents = float(
+            order.get("reposition_threshold_cents") or 0.5
+        )
 
         created_at = order.get("created_at")
         # SQLite возвращает TIMESTAMP как строку в формате "YYYY-MM-DD HH:MM:SS"
@@ -423,7 +426,6 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
         text += f"""<b>{i}.</b> {status_emoji} {status.upper()} <code>{order_id}</code>
    {side_emoji} {side} {token_name} | {price_str}¢ | {amount} USDT
    <tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {market_id} | {market_title[:25]}...
-   ⚙️ Reposition threshold: {reposition_threshold_cents:.2f}¢
    📅 {date_str}
 
 """

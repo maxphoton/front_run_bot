@@ -117,7 +117,7 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
             text += f"""<b>{i}.</b> {status_emoji} {status.upper()} <code>{order_id}</code>
    {side_emoji} {side} {token_name} | {price_str}¢ | {amount} USDT
    <tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {market_id} | {market_title[:25]}...
-   📅 {date_str}
+   <tg-emoji emoji-id="5258105663359294787">📅</tg-emoji> {date_str}
 
 """
 
@@ -426,7 +426,7 @@ Page {current_page + 1} of {(total + items_per_page - 1) // items_per_page if to
         text += f"""<b>{i}.</b> {status_emoji} {status.upper()} <code>{order_id}</code>
    {side_emoji} {side} {token_name} | {price_str}¢ | {amount} USDT
    <tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Market ID: {market_id} | {market_title[:25]}...
-   📅 {date_str}
+   <tg-emoji emoji-id="5258105663359294787">📅</tg-emoji> {date_str}
 
 """
 

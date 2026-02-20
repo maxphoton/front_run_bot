@@ -74,7 +74,7 @@ Use /start to add your first Opinion profile."""
     builder.button(text="✖️ Cancel", callback_data="cancel_orders")
     builder.adjust(1)
 
-    text = """📋 View Orders
+    text = """<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> View Orders
 
 Select an account to view orders:"""
     if isinstance(event, Message):

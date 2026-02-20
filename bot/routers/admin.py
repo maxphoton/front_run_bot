@@ -58,7 +58,8 @@ async def cmd_get_db(message: Message):
         zip_file = BufferedInputFile(zip_content, filename="database_export.zip")
 
         await message.answer_document(
-            document=zip_file, caption="📊 Database export (all tables)"
+            document=zip_file,
+            caption="""<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Database export (all tables)""",
         )
         logger.info(f"Администратор {message.from_user.id} экспортировал базу данных")
 
@@ -131,12 +132,12 @@ async def cmd_get_invites(message: Message):
         invites = await get_unused_invites(invites_count)
 
         # Формируем сообщение со статистикой и инвайтами
-        stats_text = f"""📊 <b>Invites Statistics:</b>
+        stats_text = f"""<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> <b>Invites Statistics:</b>
 • Total: {stats["total"]}
 • Used: {stats["used"]}
 • Unused: {stats["unused"]}
 
-📋 <b>{invites_count} Unused Invites (ID - Code):</b>
+<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> <b>{invites_count} Unused Invites (ID - Code):</b>
 """
 
         invites_list = []
@@ -210,7 +211,7 @@ Please check the ID and try again:"""
             await message.answer(
                 f"""✅ User deleted successfully!
 
-📋 <b>Deleted User Info:</b>
+<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> <b>Deleted User Info:</b>
 • Telegram ID: <code>{telegram_id}</code>
 • Username: @{username if username != "N/A" else "N/A"}
 
@@ -249,22 +250,22 @@ async def cmd_stats(message: Message):
         invites_stats = await get_invites_statistics()
 
         # Формируем сообщение
-        stats_text = """📊 <b>Database Statistics</b>
+        stats_text = """<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> <b>Database Statistics</b>
 
 👥 <b>Users:</b>
 • Total users: {total_users}
 • Users with orders: {users_with_orders}
 • Users with active orders: {users_with_active_orders}
 
-📋 <b>Orders:</b>
+<tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> <b>Orders:</b>
 • Total orders: {total_orders}
 • Unique markets: {unique_markets}
 
-📈 <b>Orders by Status:</b>
+<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji> <b>Orders by Status:</b>
 {orders_by_status}
 
-💰 <b>Total Amount:</b> {total_amount:.2f} USDT
-📊 <b>Average Order Amount:</b> {average_amount:.2f} USDT
+<tg-emoji emoji-id="5258260149037965799">💵</tg-emoji> <b>Total Amount:</b> {total_amount:.2f} USDT
+<tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> <b>Average Order Amount:</b> {average_amount:.2f} USDT
 
 🎫 <b>Invites:</b>
 • Total: {invites_total}

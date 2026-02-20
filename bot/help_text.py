@@ -24,13 +24,13 @@ HELP_TEXT = """📖 <b>Инструкция по работе с ботом</b>
 
 💡 <b>Множественные аккаунты:</b> Вы можете добавить несколько аккаунтов Opinion к одному Telegram аккаунту. При размещении ордера вы сможете выбрать, какой аккаунт использовать.
 
-<b>👤 Управление аккаунтами:</b>
+<b><tg-emoji emoji-id="5258011929993026890">👤</tg-emoji> Управление аккаунтами:</b>
 • <b>/add_profile</b> — добавить новый аккаунт Opinion
 • <b>/profile_list</b> — просмотреть все ваши аккаунты
 • <b>/remove_profile</b> — удалить аккаунт
 • <b>/check_profile</b> — проверить баланс, ордера и позиции аккаунта. При вызове команды автоматически проверяется
 
-<b>📊 Размещение ордера (/floating_order):</b>
+<b><tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Размещение ордера (/floating_order):</b>
 1. <b>Выберите аккаунт</b> — если у вас несколько аккаунтов
 2. Введите ссылку на маркет <a href="https://app.opinion.trade?code=BJea79">Opinion.trade</a>
 3. Если маркет категориальный — выберите подмаркет
@@ -40,7 +40,7 @@ HELP_TEXT = """📖 <b>Инструкция по работе с ботом</b>
 7. Просмотрите топ-5 бидов и асков
 8. Укажите смещение цены в центах (например: 0.1)
    Это расстояние от лучшей цены покупки (best bid), на котором будет размещен ордер
-9. Выберите направление: 📈 BUY или 📉 SELL
+9. Выберите направление: <tg-emoji emoji-id="5258391025281408576">📈</tg-emoji> BUY или 📉 SELL
    (SELL можно использовать для продажи shares)
 10. Укажите порог изменения цены в центах (например: 0.5)
     Это минимальное изменение цены, при котором бот переставит ордер
@@ -56,7 +56,7 @@ HELP_TEXT = """📖 <b>Инструкция по работе с ботом</b>
 
 Ордер будет размещен на 0.1 цента ниже текущей лучшей цены покупки. Бот будет автоматически переставлять ордер, когда цена изменится на 0.5 цента или более.
 
-<b>📋 Просмотр ордеров (/orders):</b>
+<b><tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> Просмотр ордеров (/orders):</b>
 Команда позволяет:
 • Просмотреть все ваши ордера (сгруппированы по аккаунтам)
 • Отменить ордер
@@ -83,7 +83,7 @@ HELP_TEXT = """📖 <b>Инструкция по работе с ботом</b>
 По всем вопросам обращайтесь через команду <b>/support</b>
 Вы можете отправить текстовое сообщение или фото с подписью.
 
-<b>📚 Документация:</b> <a href="https://bidask-bot.gitbook.io/docs/">bidask-bot.gitbook.io/docs</a>"""
+<b>📚 Документация:</b> <a href="https://opinionbot.gitbook.io/documentation/">opinionbot.gitbook.io/documentation</a>"""
 
 HELP_TEXT_ENG = """📖 <b>Bot Usage Instructions</b>
 
@@ -107,13 +107,13 @@ The bot automatically maintains limit orders, preventing them from being execute
 
 💡 <b>Multiple Profiles:</b> You can add multiple Opinion profiles to one Telegram profile. Each profile can have its own proxy. When placing an order, you'll be able to select which profile to use.
 
-<b>👤 Profile Management:</b>
+<b><tg-emoji emoji-id="5258011929993026890">👤</tg-emoji> Profile Management:</b>
 • <b>/add_profile</b> — add a new Opinion profile
 • <b>/profile_list</b> — view all your profiles
 • <b>/remove_profile</b> — remove an profile
 • <b>/check_profile</b> — check profile balance, orders, and positions. When called, it automatically checks and updates the profile's proxy status
 
-<b>📊 Placing an Order (/floating_order):</b>
+<b><tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> Placing an Order (/floating_order):</b>
 1. <b>Select Profile</b> — if you have multiple profiles
 2. Enter the <a href="https://app.opinion.trade?code=BJea79">Opinion.trade</a> market link
 3. If the market is categorical — select a submarket
@@ -123,7 +123,7 @@ The bot automatically maintains limit orders, preventing them from being execute
 7. View top 5 bids and asks
 8. Specify price offset in cents (e.g., 0.1)
    This is the distance from the best bid price where the order will be placed
-9. Select direction: 📈 BUY or 📉 SELL
+9. Select direction: <tg-emoji emoji-id="5258391025281408576">📈</tg-emoji> BUY or 📉 SELL
    (SELL can be used to sell shares)
 10. Specify price change threshold in cents (e.g., 0.5)
     This is the minimum price change at which the bot will reposition the order
@@ -139,7 +139,7 @@ Change threshold: 0.5 cents
 
 The order will be placed 0.1 cents below the current best bid price. The bot will automatically reposition the order when the price changes by 0.5 cents or more.
 
-<b>📋 Viewing Orders (/orders):</b>
+<b><tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> Viewing Orders (/orders):</b>
 The command allows you to:
 • View all your orders (grouped by profiles)
 • Cancel an order
@@ -166,7 +166,7 @@ The bot sends notifications about:
 For all questions, contact us via the <b>/support</b> command
 You can send a text message or a photo with a caption.
 
-<b>📚 Docs:</b> <a href="https://bidask-bot.gitbook.io/docs/">bidask-bot.gitbook.io/docs</a>"""
+<b>📚 Docs:</b> <a href="https://opinionbot.gitbook.io/documentation/">opinionbot.gitbook.io/documentation</a>"""
 
 HELP_TEXT_CN = """📖 <b>机器人使用说明</b>
 
@@ -190,13 +190,13 @@ HELP_TEXT_CN = """📖 <b>机器人使用说明</b>
 
 💡 <b>多个账户:</b> 您可以将多个Opinion账户添加到一个Telegram账户。每个账户可以有自己的代理。下订单时，您可以选择使用哪个账户。
 
-<b>👤 账户管理:</b>
+<b><tg-emoji emoji-id="5258011929993026890">👤</tg-emoji> 账户管理:</b>
 • <b>/add_profile</b> — 添加新的Opinion账户
 • <b>/profile_list</b> — 查看所有账户
 • <b>/remove_profile</b> — 删除账户
 • <b>/check_profile</b> — 检查账户余额、订单和持仓。调用时自动检查并更新账户的代理状态
 
-<b>📊 下订单 (/floating_order):</b>
+<b><tg-emoji emoji-id="5258330865674494479">📊</tg-emoji> 下订单 (/floating_order):</b>
 1. <b>选择账户</b> — 如果您有多个账户
 2. 输入 <a href="https://app.opinion.trade?code=BJea79">Opinion.trade</a> 市场链接
 3. 如果市场是分类市场 — 选择子市场
@@ -206,7 +206,7 @@ HELP_TEXT_CN = """📖 <b>机器人使用说明</b>
 7. 查看前5个买入价和卖出价
 8. 指定价格偏移（以美分计，例如：0.1）
    这是订单将放置的最佳买入价（best bid）的距离
-9. 选择方向：📈 BUY 或 📉 SELL
+9. 选择方向：<tg-emoji emoji-id="5258391025281408576">📈</tg-emoji> BUY 或 📉 SELL
    （SELL可用于出售shares）
 10. 指定价格变化阈值（以美分计，例如：0.5）
     这是机器人将重新定位订单的最小价格变化
@@ -222,7 +222,7 @@ HELP_TEXT_CN = """📖 <b>机器人使用说明</b>
 
 订单将放置在当前最佳买入价下方0.1美分处。当价格变化0.5美分或更多时，机器人将自动重新定位订单。
 
-<b>📋 查看订单 (/orders):</b>
+<b><tg-emoji emoji-id="5258503720928288433">📋</tg-emoji> 查看订单 (/orders):</b>
 该命令允许您：
 • 查看所有订单（按账户分组）
 • 取消订单
@@ -249,4 +249,4 @@ HELP_TEXT_CN = """📖 <b>机器人使用说明</b>
 如有任何问题，请通过 <b>/support</b> 命令联系我们
 您可以发送文本消息或带说明的照片。
 
-<b>📚 文档:</b> <a href="https://bidask-bot.gitbook.io/docs/">bidask-bot.gitbook.io/docs</a>"""
+<b>📚 文档:</b> <a href="https://opinionbot.gitbook.io/documentation/">opinionbot.gitbook.io/documentation</a>"""

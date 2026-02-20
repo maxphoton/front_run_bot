@@ -5,12 +5,14 @@ Handles the registration process - invite code optional via settings.
 
 import logging
 import re
+from pathlib import Path
+from typing import Union
 
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from service.config import settings
 from service.database import get_user, get_user_accounts, save_user
@@ -21,7 +23,10 @@ from routers.invites import is_invite_valid, use_invite
 logger = logging.getLogger(__name__)
 
 # Home emoji prefix for main menu messages
-MAIN_MENU_PREFIX = "🏠 "
+MAIN_MENU_PREFIX = """<tg-emoji emoji-id="5257963315258204021">🏠</tg-emoji> """
+
+MAIN_MENU_CAPTION = MAIN_MENU_PREFIX + "Main menu"
+MENU_IMAGE_PATH = Path(__file__).resolve().parent.parent.parent / "files" / "menu.png"
 
 # Shared completion message (no /floating_order)
 REGISTRATION_COMPLETED_MSG = (
@@ -42,7 +47,7 @@ After adding an account, you can:
 • Use /help to view instructions.
 • Use /support to contact administrator.
 
-📚 Docs: https://bidask-bot.gitbook.io/docs/"""
+📚 Docs: https://opinionbot.gitbook.io/documentation/"""
 )
 
 WELCOME_REGISTERED_MSG = (
@@ -60,7 +65,7 @@ Use the /help to view instructions.
 Use the /support to contact administrator.
 
 🚀 Subscribe for best strategies, updates and VIP access @cmchn_public
-📚 Docs: https://bidask-bot.gitbook.io/docs/"""
+📚 Docs: https://opinionbot.gitbook.io/documentation/"""
 )
 
 # ============================================================================
@@ -82,34 +87,64 @@ class RegistrationStates(StatesGroup):
 def build_main_menu_keyboard() -> InlineKeyboardBuilder:
     """Build main menu with inline buttons. Portfolio runs check_profile."""
     builder = InlineKeyboardBuilder()
-    # style: Bot API 9.4 — primary (blue), success (green), danger (red)
+    # Row 1: Always-first (blue); Row 2: Market, Limit (blue); Row 3: Portfolio, Help (gray)
     builder.button(
-        text="📊 Market order",
-        callback_data="menu_market",
-        style="primary",
-    )
-    builder.button(
-        text="📈 Limit order",
-        callback_data="menu_limit",
-        style="danger",
-    )
-    builder.button(
-        text="🥇 Always-first order",
+        text="Always-first Order",
         callback_data="menu_limit_first",
-        style="danger",
-    )
-    builder.button(
-        text="📋 Portfolio",
-        callback_data="menu_check_profile",
+        icon_custom_emoji_id="5258185631355378853",
         style="primary",
     )
     builder.button(
-        text="❓ Help",
-        callback_data="menu_help",
-        style="success",
+        text="Market Order",
+        callback_data="menu_market",
+        icon_custom_emoji_id="5258330865674494479",
+        style="primary",
     )
-    builder.adjust(2, 2, 1)  # 2+2+1 rows
+    builder.button(
+        text="Limit Order",
+        callback_data="menu_limit",
+        icon_custom_emoji_id="5257965174979042426",
+        style="primary",
+    )
+    builder.button(
+        text="Portfolio",
+        callback_data="menu_check_profile",
+        icon_custom_emoji_id="5258011929993026890",
+    )
+    builder.button(
+        text="Help",
+        callback_data="menu_help",
+        icon_custom_emoji_id="5258503720928288433",
+    )
+    builder.adjust(1, 2, 2)  # 1 + 2 + 2 rows
     return builder
+
+
+async def send_main_menu(
+    event: Union[Message, CallbackQuery],
+    *,
+    edit: bool = False,
+) -> None:
+    """Send main menu as photo with caption and keyboard. Use edit=True to replace current message (callback only)."""
+    markup = build_main_menu_keyboard().as_markup()
+    photo = FSInputFile(MENU_IMAGE_PATH)
+    if isinstance(event, Message):
+        await event.answer_photo(
+            photo=photo,
+            caption=MAIN_MENU_CAPTION,
+            reply_markup=markup,
+        )
+    else:
+        await event.answer()
+        if edit:
+            media = InputMediaPhoto(media=photo, caption=MAIN_MENU_CAPTION)
+            await event.message.edit_media(media=media, reply_markup=markup)
+        else:
+            await event.message.answer_photo(
+                photo=photo,
+                caption=MAIN_MENU_CAPTION,
+                reply_markup=markup,
+            )
 
 
 # ============================================================================
@@ -129,10 +164,7 @@ async def cmd_start(message: Message, state: FSMContext):
 
     # Show main menu only when user exists and has at least one Opinion account
     if user and accounts:
-        await message.answer(
-            MAIN_MENU_PREFIX + "Main menu",
-            reply_markup=build_main_menu_keyboard().as_markup(),
-        )
+        await send_main_menu(message)
         return
 
     # New user (not in DB)
@@ -150,7 +182,7 @@ async def cmd_start(message: Message, state: FSMContext):
     await message.answer(
         """ Welcome!
 🚀 Subscribe for best strategies, updates and VIP access @cmchn_public
-📚 Docs: https://bidask-bot.gitbook.io/docs/
+📚 Docs: https://opinionbot.gitbook.io/documentation/
 
 🔐 Step 1: Bot Registration
 
